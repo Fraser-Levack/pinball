@@ -49,7 +49,10 @@ export function buildTable(): Table {
   // ---------------- Structure ----------------
 
   // No outlanes: the sides slope straight down into the flippers, so only the centre drains.
-  const leftFunnel = [v(20, 250), v(20, 799), v(136, 876)];
+  // The funnel ends just above the flipper's pivot so the ball rolls straight onto the flipper.
+  // Ending it beside the pivot leaves a dip between the two rounded ends where a ball can sit forever.
+  const flipperPivot = v(145, 880);
+  const leftFunnel = [v(20, 250), v(20, 799), v(flipperPivot.x, flipperPivot.y - 9)];
   const walls = new Walls([
     topArch(),
     leftFunnel, // left side
@@ -75,7 +78,7 @@ export function buildTable(): Table {
 
   const bumpers = [v(165, 230), v(295, 230), v(230, 320)].map((p) => new PopBumper(p));
 
-  const flippers = [new Flipper(v(145, 880), "left"), new Flipper(mirror(v(145, 880)), "right")];
+  const flippers = [new Flipper(flipperPivot, "left"), new Flipper(mirror(flipperPivot), "right")];
 
   // ---------------- Scoring features and rules ----------------
 

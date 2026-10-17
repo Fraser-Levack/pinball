@@ -15,6 +15,8 @@ export const PLUNGER_TRAVEL = 30;
 const GRAVITY = 1000;
 const MAX_SPEED = 2400;
 const SUBSTEPS = 4;
+const STUCK_RADIUS = 4; // a ball that stays within this many pixels...
+const STUCK_SECONDS = 1.5; // ...for this long gets nudged free
 const BALLS_PER_GAME = 1;
 const AUTO_LAUNCH_SPEED = 1500;
 
@@ -279,6 +281,19 @@ export function stepGame(g: Game, c: Controls, dt: number) {
   }
 
   if (!playing) return;
+
+  // Safety net: a ball that has stopped dead somewhere it shouldn't gets nudged back into play.
+  // Balls on the plunger, parked in a saucer, or cradled on a raised flipper are left alone.
+  for (const b of g.balls) {
+    const r = b.rest;
+    if (!r || Math.hypot(b.x - r.x, b.y - r.y) > STUCK_RADIUS || b.held || inShooterLane(b) || c.left || c.right) {
+      b.rest = { x: b.x, y: b.y, time: 0 };
+    } else if ((r.time += dt) > STUCK_SECONDS) {
+      b.vx = b.x < W / 2 ? 200 : -200;
+      b.vy = -300;
+      b.rest = undefined;
+    }
+  }
 
   g.balls = g.balls.filter((b) => b.y <= H + BALL_R * 3);
   if (g.balls.length === 0) endOfBall(g);
