@@ -3,10 +3,12 @@
 // "Build it with Claude": sends the finished prompt to /api/build, which runs Claude Code on this
 // computer, and shows its progress live. See lib/build/claude.ts.
 
+import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import type { BuildEvent } from "@/lib/build/claude";
 
 type Phase = "idle" | "running" | "done" | "error";
+type Share = { status: "sharing" } | { status: "shared"; id: string } | { status: "error"; message: string };
 
 interface Result {
   id: string;
@@ -32,9 +34,11 @@ function formatTime(seconds: number) {
 interface Props {
   prompt: string;
   ready: boolean;
+  /** The last game saved to the leaderboard: a build of its prompt can be shared under it. */
+  savedRun: { id: string; prompt: string } | null;
 }
 
-export default function BuildPanel({ prompt, ready }: Props) {
+export default function BuildPanel({ prompt, ready, savedRun }: Props) {
   const [phase, setPhase] = useState<Phase>("idle");
   const [log, setLog] = useState<string[]>([]);
   const [files, setFiles] = useState<string[]>([]);
@@ -43,7 +47,15 @@ export default function BuildPanel({ prompt, ready }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [elapsed, setElapsed] = useState(0);
   const [builtPrompt, setBuiltPrompt] = useState<string | null>(null);
+  const [scoreId, setScoreId] = useState<string | null>(null);
+  const [share, setShare] = useState<Share | null>(null);
   const abortRef = useRef<AbortController | null>(null);
+
+  // Link the build to its leaderboard run. The score may finish saving after the build starts,
+  // and a later game's score must not be picked up, so match on the prompt.
+  useEffect(() => {
+    if (savedRun && savedRun.prompt === builtPrompt) setScoreId(savedRun.id);
+  }, [savedRun, builtPrompt]);
 
   // Stop the build if the game page goes away.
   useEffect(() => () => abortRef.current?.abort(), []);
@@ -89,6 +101,8 @@ export default function BuildPanel({ prompt, ready }: Props) {
     setResult(null);
     setError(null);
     setBuiltPrompt(prompt);
+    setScoreId(null);
+    setShare(null);
 
     let finished = false;
     try {
@@ -139,6 +153,23 @@ export default function BuildPanel({ prompt, ready }: Props) {
 
   const cancel = () => abortRef.current?.abort();
 
+  const shareBuild = async () => {
+    if (!result || !scoreId) return;
+    setShare({ status: "sharing" });
+    try {
+      const res = await fetch("/api/builds", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ buildId: result.id, scoreId, summary: result.summary }),
+      });
+      if (!res.ok) return setShare({ status: "error", message: await errorFrom(res) });
+      const { id } = await res.json();
+      setShare({ status: "shared", id });
+    } catch {
+      setShare({ status: "error", message: "Couldn't reach the game's server. Is `npm run dev` still running?" });
+    }
+  };
+
   const open = async (target: "page" | "folder") => {
     if (!result) return;
     try {
@@ -158,6 +189,7 @@ export default function BuildPanel({ prompt, ready }: Props) {
 
   const canBuild = ready && phase !== "running" && !!prompt.trim();
   const hasPage = result?.files.includes("index.html") ?? false;
+  const shareable = hasPage && result?.files.length === 1;
 
   return (
     <div className={`build build--${phase}`}>
@@ -206,7 +238,24 @@ export default function BuildPanel({ prompt, ready }: Props) {
             <button className="build-secondary" onClick={() => open("folder")}>
               SHOW FOLDER
             </button>
+            {shareable && scoreId && share?.status !== "shared" && (
+              <button className="build-secondary" onClick={shareBuild} disabled={share?.status === "sharing"}>
+                {share?.status === "sharing" ? "SHARING…" : "SHARE"}
+              </button>
+            )}
           </div>
+          {share?.status === "shared" && (
+            <div className="small build-shared">
+              Shared! <Link href={`/apps/${share.id}`}>See it in Apps</Link>
+            </div>
+          )}
+          {share?.status === "error" && <div className="build-fail small">{share.message}</div>}
+          {hasPage && !shareable && (
+            <div className="muted small">Only single-file builds can be shared, and this one has extra files.</div>
+          )}
+          {shareable && !scoreId && (
+            <div className="muted small">Save this game to the leaderboard to share the app.</div>
+          )}
           <div className="muted small build-path">{result.dir}</div>
           {error && <div className="build-fail small">{error}</div>}
         </>

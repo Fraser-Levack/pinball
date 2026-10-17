@@ -89,7 +89,7 @@ export default function Pinball() {
   const [save, setSave] = useState<SaveState | null>(null);
   const publish = (run: Run) => {
     setSave({ status: "saving", run });
-    saveRun(name, run).then(ok => setSave({ status: ok ? "saved" : "error", run }));
+    saveRun(name, run).then(id => setSave(id ? { status: "saved", run, id } : { status: "error", run }));
   };
   // The game loop is set up once per mount, so it reaches the latest values through these refs.
   const publishRef = useRef(publish);
@@ -303,7 +303,11 @@ export default function Pinball() {
             </button>
           )}
           {/* Kept mounted across games, so the last build stays reachable while the next game is played. */}
-          <BuildPanel prompt={prompt.text} ready={prompt.done && !!prompt.text} />
+          <BuildPanel
+            prompt={prompt.text}
+            ready={prompt.done && !!prompt.text}
+            savedRun={save?.id ? { id: save.id, prompt: save.run.prompt } : null}
+          />
           {prompt.done && (
             <button className="new-game" onClick={newGame}>
               NEW GAME

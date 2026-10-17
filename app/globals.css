@@ -128,3 +128,20 @@ button { font: inherit; cursor: pointer; border: none; color: var(--ink); }
 .board-score { font-weight: 800; font-variant-numeric: tabular-nums; }
 .board summary { cursor: pointer; margin-top: 4px; }
 .board-prompt { white-space: pre-wrap; font: inherit; font-size: 15px; margin: 8px 0 0; }
+
+.apps-section { margin-bottom: 24px; }
+.apps-section h2 { font-size: 12px; font-weight: 800; letter-spacing: 2px; margin: 0 0 10px; }
+.apps-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 10px; }
+.app-card { display: flex; flex-direction: column; gap: 4px; padding: 10px 12px; border-radius: 14px; background: var(--cream); box-shadow: 0 0 0 1px var(--line); color: inherit; text-decoration: none; }
+.app-card.featured { border-top: 6px solid var(--mint); }
+.app-card:hover { filter: brightness(1.03); box-shadow: 0 0 0 2px var(--teal); }
+.app-title { font-size: 15px; font-weight: 800; line-height: 1.25; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.app-blurb { font-size: 12px; line-height: 1.4; color: var(--ink-soft); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.app-meta { display: flex; justify-content: space-between; gap: 8px; margin-top: auto; padding-top: 4px; font-size: 11px; font-weight: 700; color: var(--ink-soft); }
+.app-meta span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.app-summary { line-height: 1.45; }
+.app-view-title { font-size: 20px; font-weight: 800; margin: 4px 0; }
+.app-view { max-width: 1000px; }
+.app-view-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+.app-frame { display: block; width: 100%; height: min(75vh, 720px); margin: 14px 0; border: 0; border-radius: 18px; background: #fff; box-shadow: 0 0 0 1px var(--line); }
+.build-shared { margin-top: 8px; font-weight: 600; }
