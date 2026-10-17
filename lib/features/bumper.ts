@@ -1,6 +1,6 @@
 import { BG, COLOR, INK, disc } from "../draw";
 import type { Game } from "../game";
-import { type Ball, type Vec, collideCircle } from "../physics";
+import { type Ball, type Vec, collideCircle, kick } from "../physics";
 import { Feature, type FeatureOptions } from "./feature";
 
 /** Round bumper that fires the ball away on contact. */
@@ -14,8 +14,7 @@ export class PopBumper extends Feature {
   collide(g: Game, ball: Ball) {
     const hit = collideCircle(ball, this.p, this.r, 0.8);
     if (!hit) return;
-    ball.vx += hit.nx * 380;
-    ball.vy += hit.ny * 380;
+    kick(ball, hit.nx, hit.ny, 380);
     this.flash = 1;
     this.hit(g, ball);
   }

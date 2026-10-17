@@ -77,3 +77,18 @@ export function collideCapsule(
 export function collideCircle(ball: Ball, p: Vec, r: number, restitution: number): Contact | null {
   return resolve(ball, p, r + BALL_R, restitution, ZERO);
 }
+
+// Max wobble on a kick: about ±3° of direction and ±3% of strength. Too small to notice, but enough
+// that a ball can't settle into the same bounce path between bumpers forever.
+const KICK_ANGLE_JITTER = 0.05;
+const KICK_SPEED_JITTER = 0.03;
+
+/** Push the ball along the contact normal (nx, ny), with a touch of randomness. */
+export function kick(ball: Ball, nx: number, ny: number, speed: number) {
+  const a = (Math.random() * 2 - 1) * KICK_ANGLE_JITTER;
+  const s = speed * (1 + (Math.random() * 2 - 1) * KICK_SPEED_JITTER);
+  const cos = Math.cos(a);
+  const sin = Math.sin(a);
+  ball.vx += (nx * cos - ny * sin) * s;
+  ball.vy += (nx * sin + ny * cos) * s;
+}

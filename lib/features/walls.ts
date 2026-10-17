@@ -1,6 +1,6 @@
 import { COLOR, INK, bar } from "../draw";
 import type { Game } from "../game";
-import { type Ball, type Vec, collideCapsule, side } from "../physics";
+import { type Ball, type Vec, collideCapsule, kick, side } from "../physics";
 import { Feature, type FeatureOptions } from "./feature";
 
 /** Plain static walls, given as polylines. */
@@ -41,8 +41,7 @@ export class Slingshot extends Feature {
     collideCapsule(ball, b, c, 3, 0.5);
     const hit = collideCapsule(ball, c, a, 3, 0.6);
     if (hit && hit.impact > 60) {
-      ball.vx += hit.nx * this.kick;
-      ball.vy += hit.ny * this.kick;
+      kick(ball, hit.nx, hit.ny, this.kick);
       this.flash = 1;
       this.hit(g, ball);
     }
