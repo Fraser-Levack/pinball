@@ -5,7 +5,7 @@
 //      Give it a colour from COLOR (lib/draw.ts) and a sound (lib/sound.ts) if you like.
 //   2. Attach behaviour with `.onHit((g, feature, ball) => { ... })`. Handy things to do in there:
 //        award(g, n), showMessage(g, "TEXT"), g.flags.something = true, startMultiball(g),
-//        addExtraBall(g), after(g, seconds, fn), g.events.push("goal") for a sound,
+//        after(g, seconds, fn), g.events.push("goal") for a sound,
 //        or push the ball (ball.vx / ball.vy).
 //   3. Add it to the list returned at the bottom of buildTable().
 // Use onAllLit() to do something when a whole set of rollovers/targets has been made.
@@ -21,7 +21,7 @@ import { Saucer } from "./features/saucer";
 import { Spinner } from "./features/spinner";
 import { DropTarget, StandupTarget } from "./features/target";
 import { OneWayGate, Slingshot, Walls } from "./features/walls";
-import { LANE_X, PLUNGER_Y, addExtraBall, award, showMessage, startMultiball } from "./game";
+import { LANE_X, PLUNGER_Y, award, showMessage, startMultiball } from "./game";
 import { type Vec, v } from "./physics";
 
 export interface Table {
@@ -100,7 +100,6 @@ export function buildTable(): Table {
   });
 
   // Orange drop targets: knock them all down to light the lock (multiball) at the saucer.
-  // Every second clear also lights the extra ball.
   const dropTargets = [390, 425, 460, 495].map((y) => new DropTarget(v(400, y), v(400, y + 28), { bonus: 200 }));
   onAllLit(
     dropTargets,
@@ -108,11 +107,6 @@ export function buildTable(): Table {
       award(g, 5000);
       g.flags.lock = true;
       showMessage(g, "LOCK LIT: SHOOT THE SAUCER", { color: COLOR.drops, seconds: 2.2 });
-      g.counters.dropBanks = (g.counters.dropBanks ?? 0) + 1;
-      if (g.counters.dropBanks % 2 === 0) {
-        g.flags.extraBall = true;
-        showMessage(g, "EXTRA BALL LIT", { color: COLOR.drops });
-      }
       g.events.push("goal");
     },
     0.6,
@@ -129,12 +123,8 @@ export function buildTable(): Table {
   // Purple spinner in the left orbit: points for every half turn.
   const spinner = new Spinner(v(22, 420), v(60, 420), { bonus: 10 });
 
-  // Pink saucer: collects a lit extra ball and starts multiball when the lock is lit.
+  // Pink saucer: starts multiball when the lock is lit.
   const saucer = new Saucer(v(230, 480), v(140, -650), { bonus: 500 }).onHit((g) => {
-    if (g.flags.extraBall) {
-      g.flags.extraBall = false;
-      addExtraBall(g);
-    }
     if (g.flags.lock) {
       g.flags.lock = false;
       startMultiball(g);
@@ -150,8 +140,7 @@ export function buildTable(): Table {
     ...[2, 3, 4, 5].map(
       (n, i) => new Light(v(190 + i * 40, 164), `${n}X`, { color: COLOR.lanes, lit: (g) => g.multiplier >= n }),
     ),
-    new Light(v(195, 515), "LOCK", { color: COLOR.drops, lit: (g) => !!g.flags.lock }),
-    new Light(v(265, 515), "EXTRA BALL", { color: COLOR.drops, lit: (g) => !!g.flags.extraBall }),
+    new Light(v(230, 515), "LOCK", { color: COLOR.drops, lit: (g) => !!g.flags.lock }),
   ];
 
   // Words on the playfield telling new players what each thing is for.
@@ -166,7 +155,7 @@ export function buildTable(): Table {
     new Hint(v(95, 312), () => `HIT ALL\n${countLit(standups)}/3`, { color: COLOR.standups }),
     new Hint(
       v(230, 446),
-      (g) => (g.flags.lock ? "▼ MULTIBALL ▼" : g.flags.extraBall ? "▼ EXTRA BALL ▼" : null),
+      (g) => (g.flags.lock ? "▼ MULTIBALL ▼" : null),
       { color: COLOR.saucer, size: 12, blink: true },
     ),
     new Hint(v(41, 538), () => "▲\nORBIT", { color: COLOR.spinner, size: 9 }),

@@ -129,12 +129,6 @@ export function startMultiball(g: Game) {
   g.events.push("multiball");
 }
 
-export function addExtraBall(g: Game) {
-  g.ballsLeft += 1;
-  showMessage(g, "EXTRA BALL!", { seconds: 2.5 });
-  g.events.push("bonus");
-}
-
 // ---- Game flow ----
 
 export function startGame(g: Game) {

@@ -21,7 +21,7 @@ export const LINE = INK;
 export const COLOR = {
   wall: INK,
   lanes: PALETTE.yellow, // top lanes → bonus multiplier
-  drops: PALETTE.pink, // drop targets → lock / extra ball
+  drops: PALETTE.pink, // drop targets → lock
   standups: PALETTE.teal, // standup targets
   saucer: PALETTE.pink, // saucer: collects what the drop targets light
   spinner: PALETTE.yellow, // spinner / orbit
