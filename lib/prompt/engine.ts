@@ -75,7 +75,11 @@ function resolvable(tpl: string, ctx: Ctx, depth = 0): boolean {
 function fill(tpl: string, ctx: Ctx, depth = 0): string {
   if (depth > MAX_DEPTH) throw new Error(`Slot nesting too deep in "${tpl}"`);
   return tpl.replace(SLOT, (_, key: string) => {
-    if (key.startsWith("@")) return ctx.generators[key.slice(1)](ctx.rng);
+    if (key.startsWith("@")) {
+      const value = ctx.generators[key.slice(1)](ctx.rng);
+      if (typeof value !== "string") throw new Error(`Generator {${key}} returned ${value}`);
+      return value;
+    }
     const options = lookup(key, ctx).filter(opt => resolvable(opt, ctx, depth + 1));
     return fill(pick(options, ctx.rng), ctx, depth + 1);
   });

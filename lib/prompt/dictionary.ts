@@ -8,7 +8,9 @@ import In from "@/dictonary/In.json";
 import Like from "@/dictonary/Like.json";
 import Start from "@/dictonary/Start.json";
 import config from "@/dictonary/prompt.json";
-import nouns from "@/dictonary/generators/nouns.json";
+import nounList from "@/dictonary/generators/nouns.json";
+
+const { nouns } = nounList;
 
 // New section files must be imported and added here.
 const sections: Record<string, Section> = { About, Adjectives, Conjunctions, Do, Finish, In, Like, Start };
