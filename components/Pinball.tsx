@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import NameCard from "@/components/NameCard";
 import ScoreStatus from "@/components/ScoreStatus";
 import { usePlayer } from "@/components/PlayerProvider";
+import BuildPanel from "@/components/BuildPanel";
 import { H, W, createGame, startGame, stepGame } from "@/lib/game";
 import { Input } from "@/lib/input";
 import { maskedGoal, promptText } from "@/lib/prompt/run";
@@ -289,6 +290,7 @@ export default function Pinball() {
               {copied ? "COPIED!" : "COPY PROMPT"}
             </button>
           )}
+          <BuildPanel prompt={prompt.text} ready={prompt.done && !!prompt.text} />
         </section>
 
         {save && <ScoreStatus {...save} onRetry={() => publish(save.run)} />}
