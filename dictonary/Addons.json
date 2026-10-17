@@ -1,0 +1,25 @@
+{
+  "buckets": 7,
+  "addons": [
+    { "id": "easter-egg", "label": "EASTER\nEGG", "instruction": "a hidden easter egg the player can discover (a secret key combo or click)" },
+    { "id": "sound", "label": "SOUND", "instruction": "small synthesised sound effects using the Web Audio API (no audio files)" },
+    { "id": "animation", "label": "ANIM", "instruction": "lively animations and transitions" },
+    { "id": "dark-mode", "label": "DARK\nMODE", "instruction": "a dark mode with a toggle button" },
+    { "id": "confetti", "label": "CONFETTI", "instruction": "a confetti burst when the user does something satisfying" },
+    { "id": "save", "label": "SAVE", "instruction": "saving the user's progress or settings in localStorage" },
+    { "id": "keyboard", "label": "KEYS", "instruction": "keyboard shortcuts, with a small on-screen hint listing them" },
+    { "id": "mascot", "label": "MASCOT", "instruction": "a cute animated mascot character drawn in SVG that reacts to what the user does" },
+    { "id": "achievements", "label": "BADGES", "instruction": "achievements the user unlocks, shown as little badges with a pop-up when earned" },
+    { "id": "themes", "label": "THEMES", "instruction": "a theme picker with at least three colour schemes" },
+    { "id": "particles", "label": "SPARKLE", "instruction": "a subtle animated particle background" },
+    { "id": "tutorial", "label": "HOW TO", "instruction": "a short first-visit tutorial or help overlay explaining how to use it" },
+    { "id": "share", "label": "SHARE", "instruction": "a button that copies a shareable summary of the user's result to the clipboard" },
+    { "id": "stats", "label": "STATS", "instruction": "a small stats panel tracking how the user has used it" },
+    { "id": "random", "label": "RANDOM", "instruction": "a 'surprise me' button that does something random and fun" },
+    { "id": "retro", "label": "RETRO", "instruction": "an optional retro pixel-art / CRT display mode" },
+    { "id": "voice", "label": "VOICE", "instruction": "spoken feedback using the browser's speechSynthesis API, with a mute toggle" },
+    { "id": "timer", "label": "TIMER", "instruction": "a timer or countdown challenge mode" },
+    { "id": "emoji", "label": "EMOJI", "instruction": "playful emoji reactions sprinkled through the interface" },
+    { "id": "undo", "label": "UNDO", "instruction": "undo and redo for the user's actions" }
+  ]
+}

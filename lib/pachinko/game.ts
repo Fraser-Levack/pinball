@@ -1,10 +1,10 @@
 // Pachinko: the minigame that replaces the pinball table while Claude builds the prompt.
 // A dropper sweeps along the top; a trigger drops a ball through the pegs into one of the add-on
-// buckets at the bottom (see addons.ts). Same table size and units as the pinball game.
+// buckets at the bottom, a random pick from dictonary/Addons.json (see addons.ts). Same table size and units as the pinball game.
 
 import { BG, INK, PALETTE, alpha, disc, label, roundRect, shade } from "../draw";
 import { H, W } from "../game";
-import { ADDONS, MAX_ADDONS } from "./addons";
+import { type Addon, BUCKETS, MAX_ADDONS, bucketColor, pickAddons } from "./addons";
 
 const BALL_R = 9;
 const PEG_R = 5;
@@ -18,7 +18,7 @@ const RAIL_MAX = W - 30;
 const SWEEP_SPEED = 220; // dropper px/s
 const BUCKET_TOP = 840;
 const FLOOR_Y = H - 30;
-const BUCKET_W = W / ADDONS.length;
+const BUCKET_W = W / BUCKETS;
 const INTRO_SECONDS = 2.2;
 
 interface PBall {
@@ -35,6 +35,7 @@ interface Flash {
 }
 
 export interface Pachinko {
+  buckets: Addon[]; // this round's random pick, left to right
   balls: PBall[];
   pegs: { x: number; y: number; lit: number }[];
   dropX: number;
@@ -60,6 +61,7 @@ function makePegs() {
 
 export function createPachinko(): Pachinko {
   return {
+    buckets: pickAddons(),
     balls: [],
     pegs: makePegs(),
     dropX: W / 2,
@@ -75,7 +77,7 @@ export function createPachinko(): Pachinko {
 }
 
 function land(p: Pachinko, bucket: number) {
-  const addon = ADDONS[bucket];
+  const addon = p.buckets[bucket];
   let text: string;
   if (p.locked) text = "LOCKED IN";
   else if (p.wins.includes(addon.id)) text = "GOT IT";
@@ -142,7 +144,7 @@ export function stepPachinko(p: Pachinko, drop: boolean, dt: number) {
 
     // Bucket dividers: thin posts with round tops.
     if (b.y > BUCKET_TOP - BALL_R) {
-      for (let i = 1; i < ADDONS.length; i++) {
+      for (let i = 1; i < BUCKETS; i++) {
         const x = i * BUCKET_W;
         const dx = b.x - x;
         if (Math.abs(dx) >= BALL_R + 2) continue;
@@ -159,7 +161,7 @@ export function stepPachinko(p: Pachinko, drop: boolean, dt: number) {
 
   p.balls = p.balls.filter((b) => {
     if (b.y < FLOOR_Y - BALL_R) return true;
-    land(p, Math.min(ADDONS.length - 1, Math.max(0, Math.floor(b.x / BUCKET_W))));
+    land(p, Math.min(BUCKETS - 1, Math.max(0, Math.floor(b.x / BUCKET_W))));
     return false;
   });
 }
@@ -186,15 +188,16 @@ export function renderPachinko(ctx: CanvasRenderingContext2D, p: Pachinko) {
   }
 
   // Buckets.
-  ADDONS.forEach((a, i) => {
+  p.buckets.forEach((a, i) => {
+    const color = bucketColor(i);
     const x = i * BUCKET_W;
     const won = p.wins.includes(a.id);
-    roundRect(ctx, x + 3, BUCKET_TOP, BUCKET_W - 6, H - BUCKET_TOP - 10, 10, won ? a.color : alpha(a.color, 0.25));
-    label(ctx, a.label, { x: x + BUCKET_W / 2, y: BUCKET_TOP + (a.label.includes("\n") ? 40 : 50) }, 12, won ? INK : shade(a.color), 800);
+    roundRect(ctx, x + 3, BUCKET_TOP, BUCKET_W - 6, H - BUCKET_TOP - 10, 10, won ? color : alpha(color, 0.25));
+    label(ctx, a.label, { x: x + BUCKET_W / 2, y: BUCKET_TOP + (a.label.includes("\n") ? 40 : 50) }, 12, won ? INK : shade(color), 800);
     if (won) label(ctx, "✓", { x: x + BUCKET_W / 2, y: BUCKET_TOP + 100 }, 26, INK, 800);
   });
   ctx.fillStyle = INK;
-  for (let i = 1; i < ADDONS.length; i++) {
+  for (let i = 1; i < BUCKETS; i++) {
     const x = i * BUCKET_W;
     ctx.fillRect(x - 2, BUCKET_TOP, 4, H - BUCKET_TOP - 10);
     disc(ctx, { x, y: BUCKET_TOP }, 3, INK);

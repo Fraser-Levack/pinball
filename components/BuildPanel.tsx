@@ -7,7 +7,7 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import type { BuildEvent } from "@/lib/build/claude";
-import { addonById } from "@/lib/pachinko/addons";
+import { addonById, bucketColor } from "@/lib/pachinko/addons";
 
 type Phase = "idle" | "running" | "done" | "error";
 /** What's running: the build itself, then (if any were won) the add-on pass. */
@@ -347,10 +347,10 @@ function AddonList({ ids }: { ids: string[] }) {
   if (ids.length === 0) return null;
   return (
     <div className="build-files">
-      {ids.map((id) => {
+      {ids.map((id, i) => {
         const a = addonById(id);
         return (
-          <span key={id} className="chip addon-chip" style={{ background: a?.color }}>
+          <span key={id} className="chip addon-chip" style={{ background: bucketColor(i) }}>
             + {a ? a.label.replace("\n", " ") : id}
           </span>
         );
