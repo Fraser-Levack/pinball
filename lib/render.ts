@@ -85,7 +85,6 @@ export function render(ctx: CanvasRenderingContext2D, g: Game, time: number) {
       ["Launch: hold both, then let go", 13, COLOR.flipper],
       ["Hit the coloured things to score.", 13],
       ["Every score reveals letters of your AI prompt.", 12, COLOR.save],
-      ["The list on the right shows what to aim for.", 11, alpha(BRIGHT, 0.7)],
       ["PULL A TRIGGER TO START", 16, Math.floor(time * 2) % 2 ? COLOR.save : alpha(COLOR.save, 0.4)],
     ]);
   }

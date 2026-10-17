@@ -7,8 +7,7 @@
 //        award(g, n), showMessage(g, "TEXT"), g.flags.something = true, startMultiball(g),
 //        addExtraBall(g), after(g, seconds, fn), g.events.push("goal") for a sound,
 //        or push the ball (ball.vx / ball.vy).
-//   3. Add it to the list returned at the bottom of buildTable(), and a line to `goals`
-//      if players should know about it.
+//   3. Add it to the list returned at the bottom of buildTable().
 // Use onAllLit() to do something when a whole set of rollovers/targets has been made.
 
 import { COLOR, alpha } from "./draw";
@@ -22,20 +21,11 @@ import { Saucer } from "./features/saucer";
 import { Spinner } from "./features/spinner";
 import { DropTarget, StandupTarget } from "./features/target";
 import { OneWayGate, Slingshot, Walls } from "./features/walls";
-import { type Game, H, LANE_X, PLUNGER_Y, addExtraBall, award, showMessage, startMultiball } from "./game";
+import { H, LANE_X, PLUNGER_Y, addExtraBall, award, showMessage, startMultiball } from "./game";
 import { type Vec, v } from "./physics";
-
-/** One line of the "what to aim for" list next to the table. */
-export interface Goal {
-  color: string;
-  text: string;
-  status: string;
-  ready?: boolean; // highlighted: something is lit and waiting to be collected
-}
 
 export interface Table {
   features: Feature[];
-  goals: (g: Game) => Goal[];
 }
 
 // Mirror a point left↔right around the playfield centre (x = 230).
@@ -182,33 +172,6 @@ export function buildTable(): Table {
     new Hint(v(310, 945), () => "RT / M", { color: alpha(COLOR.flipper, 0.4) }),
   ];
 
-  const goals = (g: Game): Goal[] => [
-    {
-      color: COLOR.lanes,
-      text: "Roll over the yellow P-I-N lanes",
-      status: g.multiplier >= 5 ? "bonus maxed at 5X" : `${countLit(topLanes)}/3 → bonus ${g.multiplier + 1}X`,
-    },
-    {
-      color: COLOR.drops,
-      text: "Knock down the orange targets",
-      status: `${countLit(dropTargets)}/4 → lights LOCK`,
-    },
-    {
-      color: COLOR.saucer,
-      text: "Shoot the pink saucer",
-      status: g.flags.lock ? "LOCK LIT → MULTIBALL!" : g.flags.extraBall ? "→ EXTRA BALL!" : "light LOCK first",
-      ready: !!(g.flags.lock || g.flags.extraBall),
-    },
-    {
-      color: COLOR.standups,
-      text: "Hit the blue targets",
-      status: g.flags.kickback ? "KICKBACK READY" : `${countLit(standups)}/3 → kickback`,
-      ready: !!g.flags.kickback,
-    },
-    { color: COLOR.spinner, text: "Shoot up the left orbit", status: "spinner: 100 a spin" },
-    { color: COLOR.bumper, text: "Red bumpers & slingshots", status: "keep it bouncing" },
-  ];
-
   // Drawn in this order, so lights go underneath and flippers on top.
   const features = [
     ...lights,
@@ -229,5 +192,5 @@ export function buildTable(): Table {
     rightOutlane,
     ...flippers,
   ];
-  return { features, goals };
+  return { features };
 }

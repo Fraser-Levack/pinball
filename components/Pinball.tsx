@@ -6,7 +6,7 @@ import { Input } from "@/lib/input";
 import { maskedGoal, promptText } from "@/lib/prompt/run";
 import { render } from "@/lib/render";
 import { Sound } from "@/lib/sound";
-import { type Goal, buildTable } from "@/lib/table";
+import { buildTable } from "@/lib/table";
 
 const STEP = 1 / 120;
 
@@ -42,7 +42,6 @@ interface Hud {
   multiplier: number;
   high: number;
   gamepad: string | null;
-  goals: Goal[];
   soundReady: boolean;
 }
 
@@ -87,7 +86,6 @@ export default function Pinball() {
     multiplier: 1,
     high: 0,
     gamepad: null,
-    goals: [],
     soundReady: false,
   });
 
@@ -172,7 +170,6 @@ export default function Pinball() {
         multiplier: game.multiplier,
         high,
         gamepad: snap.gamepad,
-        goals: table.goals(game),
         soundReady: sound.ready,
       };
       const key = JSON.stringify(next);
@@ -269,19 +266,6 @@ export default function Pinball() {
             {copied ? "COPIED" : "COPY PROMPT"}
           </button>
         )}
-
-        <div className="dim section">WHAT TO AIM FOR</div>
-        <ul className="goals">
-          {hud.goals.map((goal) => (
-            <li key={goal.text} className={goal.ready ? "ready" : undefined} style={{ color: goal.color }}>
-              <span className="dot" style={{ background: goal.color }} />
-              <div>
-                <div>{goal.text}</div>
-                <div className="status">{goal.status}</div>
-              </div>
-            </li>
-          ))}
-        </ul>
 
         <div className="dim section">CONTROLS</div>
         <table className="dim">

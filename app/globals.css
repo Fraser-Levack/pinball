@@ -22,15 +22,9 @@ canvas { display: block; border: 1px solid #262; }
 .hud table { margin-top: 4px; }
 .hud .section { margin-top: 16px; letter-spacing: 1px; }
 .hud .row { display: flex; gap: 20px; flex-wrap: wrap; }
-.hud .goals { list-style: none; margin: 4px 0 0; padding: 0; font-size: 13px; line-height: 1.35; }
-.hud .goals li { display: flex; gap: 10px; align-items: flex-start; padding: 5px 6px; border-radius: 4px; opacity: 0.85; }
-.hud .goals li.ready { opacity: 1; background: rgba(255,255,255,0.07); animation: pulse 0.8s ease-in-out infinite alternate; }
-.hud .goals .dot { flex: none; width: 10px; height: 10px; border-radius: 50%; margin-top: 4px; }
-.hud .goals .status { font-size: 11px; opacity: 0.75; }
 .hud .tip { font-size: 12px; color: #585; margin-top: 6px; line-height: 1.4; }
 .hud .sound { margin-top: 16px; font: inherit; font-size: 13px; color: #cfc; background: #031; border: 1px solid #3c3; border-radius: 4px; padding: 4px 12px; cursor: pointer; }
 .hud .sound:hover { background: #052; }
-@keyframes pulse { from { background: rgba(255,255,255,0.03); } to { background: rgba(255,255,255,0.14); } }
 .hud .prompt { max-height: 30vh; overflow-y: auto; margin-top: 4px; padding: 8px; border: 1px solid #262; color: #cfc; font-size: 13px; line-height: 1.45; white-space: pre-wrap; }
 .hud .prompt.done { border-color: #3c3; }
 .hud .prompt-goal { margin-top: 8px; font-size: 13px; line-height: 1.45; }
