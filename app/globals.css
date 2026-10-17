@@ -45,6 +45,9 @@ button { font: inherit; cursor: pointer; border: none; color: var(--ink); }
 .copy { display: block; width: 100%; margin-top: 14px; padding: 14px; border-radius: 14px; background: var(--pink); color: #fff; font-size: 16px; font-weight: 800; letter-spacing: 1.5px; }
 .copy:hover { filter: brightness(1.05); }
 .copy:disabled { opacity: 0.4; cursor: default; }
+.new-game { display: block; width: 100%; margin-top: 10px; padding: 12px; border-radius: 14px; background: var(--yellow); font-size: 15px; font-weight: 800; letter-spacing: 1.5px; }
+.new-game:hover { filter: brightness(1.05); }
+.new-game:disabled { opacity: 0.5; cursor: default; }
 
 /* Build it with Claude */
 .build { margin-top: 14px; }

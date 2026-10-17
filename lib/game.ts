@@ -155,6 +155,12 @@ export function startGame(g: Game) {
   newBall(g);
 }
 
+/** Back to the attract screen with a blank prompt, as if the page had just loaded. */
+export function resetGame(g: Game) {
+  Object.assign(g, createGame(g.features));
+  for (const f of g.features) f.reset?.(g);
+}
+
 function newBall(g: Game) {
   serveBall(g);
 }

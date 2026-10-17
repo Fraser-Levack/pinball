@@ -29,7 +29,13 @@ function formatTime(seconds: number) {
   return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}`;
 }
 
-export default function BuildPanel({ prompt, ready }: { prompt: string; ready: boolean }) {
+interface Props {
+  prompt: string;
+  ready: boolean;
+  onBuildingChange?: (building: boolean) => void;
+}
+
+export default function BuildPanel({ prompt, ready, onBuildingChange }: Props) {
   const [phase, setPhase] = useState<Phase>("idle");
   const [log, setLog] = useState<string[]>([]);
   const [files, setFiles] = useState<string[]>([]);
@@ -39,6 +45,8 @@ export default function BuildPanel({ prompt, ready }: { prompt: string; ready: b
   const [elapsed, setElapsed] = useState(0);
   const [builtPrompt, setBuiltPrompt] = useState<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
+
+  useEffect(() => onBuildingChange?.(phase === "running"), [phase, onBuildingChange]);
 
   // Stop the build if the game page goes away.
   useEffect(() => () => abortRef.current?.abort(), []);

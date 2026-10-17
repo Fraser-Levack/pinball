@@ -5,7 +5,7 @@ import NameCard from "@/components/NameCard";
 import ScoreStatus from "@/components/ScoreStatus";
 import { usePlayer } from "@/components/PlayerProvider";
 import BuildPanel from "@/components/BuildPanel";
-import { H, W, createGame, startGame, stepGame } from "@/lib/game";
+import { H, W, createGame, resetGame, startGame, stepGame } from "@/lib/game";
 import { Input } from "@/lib/input";
 import { maskedGoal, promptText } from "@/lib/prompt/run";
 import { render } from "@/lib/render";
@@ -96,6 +96,13 @@ export default function Pinball() {
   publishRef.current = publish;
   const nameRef = useRef(name);
   nameRef.current = name;
+  // Bumped for each new game so the build panel starts empty. Kept while a build is running, so
+  // starting another game doesn't cancel it.
+  const [gameNo, setGameNo] = useState(0);
+  const [building, setBuilding] = useState(false);
+  const buildingRef = useRef(building);
+  buildingRef.current = building;
+  const resetRef = useRef(false); // set by the NEW GAME button, handled by the game loop
   const [hud, setHud] = useState<Hud>({
     prompt: { text: "", sections: 0, started: false, done: false, goal: null },
     score: 0,
@@ -155,6 +162,13 @@ export default function Pinball() {
       if (snap.start && nameRef.current && game.phase !== "playing" && canStart) {
         startGame(game);
         setSave(null);
+        if (!buildingRef.current) setGameNo(n => n + 1);
+      }
+      if (resetRef.current) {
+        resetRef.current = false;
+        resetGame(game);
+        setSave(null);
+        setGameNo(n => n + 1);
       }
 
       while (acc >= STEP) {
@@ -241,6 +255,12 @@ export default function Pinball() {
     } catch {}
   };
 
+  const newGame = () => {
+    resetRef.current = true;
+    // Take focus off the button so the flipper keys go straight back to the game.
+    (document.activeElement as HTMLElement | null)?.blur();
+  };
+
   const { prompt } = hud;
   const goal = prompt.goal;
 
@@ -290,7 +310,17 @@ export default function Pinball() {
               {copied ? "COPIED!" : "COPY PROMPT"}
             </button>
           )}
-          <BuildPanel prompt={prompt.text} ready={prompt.done && !!prompt.text} />
+          <BuildPanel
+            key={gameNo}
+            prompt={prompt.text}
+            ready={prompt.done && !!prompt.text}
+            onBuildingChange={setBuilding}
+          />
+          {prompt.done && (
+            <button className="new-game" onClick={newGame} disabled={building}>
+              {building ? "WAIT FOR THE BUILD TO FINISH" : "NEW GAME"}
+            </button>
+          )}
         </section>
 
         {save && <ScoreStatus {...save} onRetry={() => publish(save.run)} />}
