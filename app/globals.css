@@ -145,3 +145,10 @@ button { font: inherit; cursor: pointer; border: none; color: var(--ink); }
 .app-view-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
 .app-frame { display: block; width: 100%; height: min(75vh, 720px); margin: 14px 0; border: 0; border-radius: 18px; background: #fff; box-shadow: 0 0 0 1px var(--line); }
 .build-shared { margin-top: 8px; font-weight: 600; }
+
+/* ---- Pachinko (replaces the table while Claude builds) ---- */
+.mode-banner { position: absolute; top: -12px; left: 50%; transform: translateX(-50%); z-index: 1; white-space: nowrap; padding: 6px 14px; border-radius: 999px; background: var(--pink); color: #fff; font-size: 12px; font-weight: 800; letter-spacing: 1.5px; box-shadow: 0 6px 18px rgba(18, 70, 79, 0.25); animation: mode-pop 0.35s ease-out; }
+@keyframes mode-pop { from { transform: translateX(-50%) scale(0.6); opacity: 0; } to { transform: translateX(-50%) scale(1); opacity: 1; } }
+.pachinko-note { margin-bottom: 10px; padding: 10px 12px; border-radius: 12px; background: rgba(239, 71, 111, 0.1); font-size: 13px; line-height: 1.45; }
+.pachinko-note strong { color: var(--pink); }
+.addon-chip { color: var(--ink); }

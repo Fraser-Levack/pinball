@@ -13,6 +13,7 @@ import { statSync } from "node:fs";
 import { mkdir, readdir, stat, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
+import { addonById } from "../pachinko/addons";
 
 /** Where builds go: one folder per build. Override with PINBALL_BUILD_DIR. */
 export const BUILD_ROOT = path.resolve(process.env.PINBALL_BUILD_DIR || path.join(os.homedir(), "pinball-builds"));
@@ -151,12 +152,31 @@ export class BusyError extends Error {
   }
 }
 
+/** A second pass over a finished build that adds the add-ons won in the pachinko minigame. */
+export interface AddonPass {
+  id: string; // the finished build to add to
+  addons: string[]; // ids from lib/pachinko/addons.ts
+}
+
+function addonPrompt(prompt: string, addons: string[]): string {
+  const list = addons.map((id) => `- ${addonById(id)?.instruction ?? id}`).join("\n");
+  return [
+    "The index.html in the current directory was built from this prompt:",
+    prompt,
+    "",
+    "Improve it by adding these add-ons, keeping everything that already works:",
+    list,
+    "",
+    "Edit the existing index.html and keep to the same rules: one self-contained file, nothing loaded from the network.",
+  ].join("\n");
+}
+
 /**
- * Start building `prompt`. Claims the one-build lock synchronously (throws BusyError if taken),
+ * Start building `prompt`, or with `pass`, add add-ons to an earlier build of it. Claims the one-build lock synchronously (throws BusyError if taken),
  * then reports progress through `emit`, ending with exactly one "done" or "error" event.
  * Returns a function that cancels the build.
  */
-export function startBuild(prompt: string, emit: (e: BuildEvent) => void): () => void {
+export function startBuild(prompt: string, emit: (e: BuildEvent) => void, pass?: AddonPass): () => void {
   if (isBuilding()) throw new BusyError();
   shared.__pinballBuild = "starting";
 
@@ -197,8 +217,15 @@ export function startBuild(prompt: string, emit: (e: BuildEvent) => void): () =>
     let id: string;
     let dir: string;
     try {
-      ({ id, dir } = await makeBuildFolder(prompt));
+      if (pass) {
+        const existing = buildDir(pass.id);
+        if (!existing || !(await stat(existing)).isDirectory()) throw new Error("that build's folder is gone");
+        ({ id, dir } = { id: pass.id, dir: existing });
+      } else {
+        ({ id, dir } = await makeBuildFolder(prompt));
+      }
     } catch (e) {
+      if (pass) return finish({ type: "error", message: `Couldn't add the add-ons: ${(e as Error).message}` });
       finish({ type: "error", message: `Couldn't create a build folder in ${BUILD_ROOT}: ${(e as Error).message}` });
       return;
     }
@@ -285,7 +312,8 @@ export function startBuild(prompt: string, emit: (e: BuildEvent) => void): () =>
         let files: string[] = [];
         try {
           files = await listFiles(dir);
-          await writeFile(path.join(dir, PROMPT_FILE), prompt + "\n", "utf8");
+          const extra = pass ? `\nAdd-ons: ${pass.addons.join(", ")}\n` : "";
+          await writeFile(path.join(dir, PROMPT_FILE), prompt + "\n" + extra, "utf8");
         } catch {}
         finish({ type: "done", id, dir, summary: oneLine(r.text, 600), files });
       } else {
@@ -295,7 +323,7 @@ export function startBuild(prompt: string, emit: (e: BuildEvent) => void): () =>
     });
 
     child.stdin!.on("error", () => {}); // if Claude exits before reading the prompt, report that via "close"
-    child.stdin!.end(prompt);
+    child.stdin!.end(pass ? addonPrompt(prompt, pass.addons) : prompt);
   })().catch((e) => finish({ type: "error", message: `Build failed: ${(e as Error).message}` }));
 
   return () => stop("Build cancelled.");

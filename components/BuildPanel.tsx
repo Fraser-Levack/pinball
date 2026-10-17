@@ -1,14 +1,19 @@
 "use client";
 
 // "Build it with Claude": sends the finished prompt to /api/build, which runs Claude Code on this
-// computer, and shows its progress live. See lib/build/claude.ts.
+// computer, and shows its progress live. See lib/build/claude.ts. While it runs, the table switches
+// to pachinko (lib/pachinko); any add-ons won there are added by a second pass once the build is done.
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import type { BuildEvent } from "@/lib/build/claude";
+import { addonById } from "@/lib/pachinko/addons";
 
 type Phase = "idle" | "running" | "done" | "error";
+/** What's running: the build itself, then (if any were won) the add-on pass. */
+export type BuildStage = "main" | "addons";
 type Share = { status: "sharing" } | { status: "shared"; id: string } | { status: "error"; message: string };
+type Done = Extract<BuildEvent, { type: "done" }>;
 
 interface Result {
   id: string;
@@ -31,15 +36,70 @@ function formatTime(seconds: number) {
   return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}`;
 }
 
+/** Streams one /api/build request into `handle`. Resolves with its "done" event, if there was one. */
+async function stream(body: object, signal: AbortSignal, handle: (e: BuildEvent) => void): Promise<Done | null> {
+  let finished = false;
+  let done: Done | null = null;
+  try {
+    const res = await fetch("/api/build", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+      signal,
+    });
+    if (!res.ok || !res.body) {
+      handle({ type: "error", message: await errorFrom(res) });
+      return null;
+    }
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let buf = "";
+    for (;;) {
+      const { value, done: eof } = await reader.read();
+      if (eof) break;
+      buf += decoder.decode(value, { stream: true });
+      let i;
+      while ((i = buf.indexOf("\n")) >= 0) {
+        const line = buf.slice(0, i).trim();
+        buf = buf.slice(i + 1);
+        if (!line) continue;
+        let event: BuildEvent;
+        try {
+          event = JSON.parse(line);
+        } catch {
+          continue;
+        }
+        if (event.type === "done" || event.type === "error") finished = true;
+        if (event.type === "done") done = event;
+        handle(event);
+      }
+    }
+    if (!finished) handle({ type: "error", message: "Lost the connection to the build." });
+  } catch (e) {
+    if (finished) return done;
+    const aborted = (e as Error).name === "AbortError";
+    handle({
+      type: "error",
+      message: aborted ? "Build cancelled." : "Couldn't reach the game's server. Is `npm run dev` still running?",
+    });
+  }
+  return done;
+}
+
 interface Props {
   prompt: string;
   ready: boolean;
   /** The last game saved to the leaderboard: a build of its prompt can be shared under it. */
   savedRun: { id: string; prompt: string } | null;
+  /** Add-on ids won in the pachinko so far; read when the main build finishes. */
+  addons: string[];
+  /** Called with the running stage, or null when nothing is running. */
+  onStage: (stage: BuildStage | null) => void;
 }
 
-export default function BuildPanel({ prompt, ready, savedRun }: Props) {
+export default function BuildPanel({ prompt, ready, savedRun, addons, onStage }: Props) {
   const [phase, setPhase] = useState<Phase>("idle");
+  const [stage, setStage] = useState<BuildStage>("main");
   const [log, setLog] = useState<string[]>([]);
   const [files, setFiles] = useState<string[]>([]);
   const [dir, setDir] = useState<string | null>(null);
@@ -47,9 +107,18 @@ export default function BuildPanel({ prompt, ready, savedRun }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [elapsed, setElapsed] = useState(0);
   const [builtPrompt, setBuiltPrompt] = useState<string | null>(null);
+  const [addedAddons, setAddedAddons] = useState<string[]>([]);
   const [scoreId, setScoreId] = useState<string | null>(null);
   const [share, setShare] = useState<Share | null>(null);
   const abortRef = useRef<AbortController | null>(null);
+  const addonsRef = useRef(addons);
+  addonsRef.current = addons;
+  const onStageRef = useRef(onStage);
+  onStageRef.current = onStage;
+
+  useEffect(() => {
+    onStageRef.current(phase === "running" ? stage : null);
+  }, [phase, stage]);
 
   // Link the build to its leaderboard run. The score may finish saving after the build starts,
   // and a later game's score must not be picked up, so match on the prompt.
@@ -68,7 +137,8 @@ export default function BuildPanel({ prompt, ready, savedRun }: Props) {
     return () => clearInterval(timer);
   }, [phase]);
 
-  const handle = (e: BuildEvent) => {
+  // Done and error events are left to `build`, which knows whether an add-on pass follows.
+  const handle = (addonPass: boolean) => (e: BuildEvent) => {
     switch (e.type) {
       case "start":
         setDir(e.dir);
@@ -81,11 +151,11 @@ export default function BuildPanel({ prompt, ready, savedRun }: Props) {
         break;
       case "done":
         setResult({ id: e.id, dir: e.dir, summary: e.summary, files: e.files });
-        setPhase("done");
         break;
       case "error":
-        setError(e.message);
-        setPhase("error");
+        // A failed add-on pass still leaves the main build, so that's shown with the error.
+        setError(addonPass ? `The add-ons weren't added: ${e.message}` : e.message);
+        setPhase(addonPass ? "done" : "error");
         break;
     }
   };
@@ -94,6 +164,7 @@ export default function BuildPanel({ prompt, ready, savedRun }: Props) {
     if (phase === "running" || !prompt.trim()) return;
     const controller = new AbortController();
     abortRef.current = controller;
+    setStage("main");
     setPhase("running");
     setLog([]);
     setFiles([]);
@@ -101,51 +172,22 @@ export default function BuildPanel({ prompt, ready, savedRun }: Props) {
     setResult(null);
     setError(null);
     setBuiltPrompt(prompt);
+    setAddedAddons([]);
     setScoreId(null);
     setShare(null);
 
-    let finished = false;
     try {
-      const res = await fetch("/api/build", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt }),
-        signal: controller.signal,
-      });
-      if (!res.ok || !res.body) {
-        handle({ type: "error", message: await errorFrom(res) });
-        return;
+      const built = await stream({ prompt }, controller.signal, handle(false));
+      if (!built) return;
+      const won = addonsRef.current;
+      if (won.length > 0) {
+        // Lock in what was won in the pachinko and have Claude add it to the build.
+        setStage("addons");
+        setAddedAddons(won);
+        setLog([]);
+        if (!(await stream({ prompt, buildId: built.id, addons: won }, controller.signal, handle(true)))) return;
       }
-      const reader = res.body.getReader();
-      const decoder = new TextDecoder();
-      let buf = "";
-      for (;;) {
-        const { value, done } = await reader.read();
-        if (done) break;
-        buf += decoder.decode(value, { stream: true });
-        let i;
-        while ((i = buf.indexOf("\n")) >= 0) {
-          const line = buf.slice(0, i).trim();
-          buf = buf.slice(i + 1);
-          if (!line) continue;
-          let event: BuildEvent;
-          try {
-            event = JSON.parse(line);
-          } catch {
-            continue;
-          }
-          if (event.type === "done" || event.type === "error") finished = true;
-          handle(event);
-        }
-      }
-      if (!finished) handle({ type: "error", message: "Lost the connection to the build." });
-    } catch (e) {
-      if (finished) return;
-      const aborted = (e as Error).name === "AbortError";
-      handle({
-        type: "error",
-        message: aborted ? "Build cancelled." : "Couldn't reach the game's server. Is `npm run dev` still running?",
-      });
+      setPhase("done");
     } finally {
       if (abortRef.current === controller) abortRef.current = null;
     }
@@ -196,10 +238,21 @@ export default function BuildPanel({ prompt, ready, savedRun }: Props) {
       {phase === "running" && (
         <>
           <div className="build-head">
-            <span className="chip teal-chip">CLAUDE IS BUILDING</span>
+            <span className="chip teal-chip">{stage === "main" ? "CLAUDE IS BUILDING" : "ADDING ADD-ONS"}</span>
             <span className="muted">{formatTime(elapsed)}</span>
           </div>
           <div className="build-spinner" aria-hidden />
+          <div className="pachinko-note">
+            {stage === "main" ? (
+              <>
+                <strong>Pinball is paused: you&apos;re playing pachinko!</strong> Drop balls with either trigger.
+                Each bucket is an add-on for Claude to build in once the main build is done.
+              </>
+            ) : (
+              <strong>Add-ons locked in. Claude is adding them now.</strong>
+            )}
+            <AddonList ids={stage === "main" ? addons : addedAddons} />
+          </div>
           {log.length > 0 ? (
             <ul className="build-log">
               {log.map((line, i) => (
@@ -228,6 +281,7 @@ export default function BuildPanel({ prompt, ready, savedRun }: Props) {
             </div>
           )}
           <div className="build-summary">{result.summary}</div>
+          <AddonList ids={addedAddons} />
           <FileList files={result.files} />
           <div className="build-actions">
             {hasPage && (
@@ -279,11 +333,28 @@ export default function BuildPanel({ prompt, ready, savedRun }: Props) {
           {phase === "idle" && (
             <div className="muted small">
               Claude Code builds your prompt as a web page in a new folder on this computer. It can only
-              write files inside that folder.
+              write files inside that folder. While it works, the table turns into pachinko: win add-ons
+              for your build.
             </div>
           )}
         </>
       )}
+    </div>
+  );
+}
+
+function AddonList({ ids }: { ids: string[] }) {
+  if (ids.length === 0) return null;
+  return (
+    <div className="build-files">
+      {ids.map((id) => {
+        const a = addonById(id);
+        return (
+          <span key={id} className="chip addon-chip" style={{ background: a?.color }}>
+            + {a ? a.label.replace("\n", " ") : id}
+          </span>
+        );
+      })}
     </div>
   );
 }

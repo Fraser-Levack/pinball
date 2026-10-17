@@ -4,9 +4,10 @@ import { useEffect, useRef, useState } from "react";
 import NameCard from "@/components/NameCard";
 import ScoreStatus from "@/components/ScoreStatus";
 import { usePlayer } from "@/components/PlayerProvider";
-import BuildPanel from "@/components/BuildPanel";
+import BuildPanel, { type BuildStage } from "@/components/BuildPanel";
 import { H, W, createGame, resetGame, startGame, stepGame } from "@/lib/game";
 import { Input } from "@/lib/input";
+import { type Pachinko, createPachinko, renderPachinko, stepPachinko } from "@/lib/pachinko/game";
 import { maskedGoal, promptText } from "@/lib/prompt/run";
 import { render } from "@/lib/render";
 import { type Run, type SaveState, saveRun } from "@/lib/scores";
@@ -49,6 +50,7 @@ interface Hud {
   high: number;
   gamepad: string | null;
   soundReady: boolean;
+  addons: string[]; // won in the pachinko during the current build
 }
 
 function loadHigh(): number {
@@ -97,6 +99,15 @@ export default function Pinball() {
   const nameRef = useRef(name);
   nameRef.current = name;
   const resetRef = useRef(false); // set by the NEW GAME button, handled by the game loop
+  // While Claude builds, the table is swapped for pachinko (null means pinball is on the table).
+  const pachinkoRef = useRef<Pachinko | null>(null);
+  const [stage, setStage] = useState<BuildStage | null>(null);
+  const onStage = (next: BuildStage | null) => {
+    setStage(next);
+    if (next === "main" && !pachinkoRef.current) pachinkoRef.current = createPachinko();
+    if (next === "addons" && pachinkoRef.current) pachinkoRef.current.locked = true;
+    if (next === null) pachinkoRef.current = null;
+  };
   const [hud, setHud] = useState<Hud>({
     prompt: { text: "", sections: 0, started: false, done: false, goal: null },
     score: 0,
@@ -105,6 +116,7 @@ export default function Pinball() {
     high: 0,
     gamepad: null,
     soundReady: false,
+    addons: [],
   });
 
   useEffect(() => {
@@ -150,10 +162,11 @@ export default function Pinball() {
 
       const snap = input.poll();
       if (snap.start) sound.unlock();
+      const pachinko = pachinkoRef.current;
       // Brief lockout after game over so a last-second flip doesn't instantly restart.
       const canStart = game.phase === "ready" || now - gameOverAt > 1500;
       // No launching until a player name is entered.
-      if (snap.start && nameRef.current && game.phase !== "playing" && canStart) {
+      if (!pachinko && snap.start && nameRef.current && game.phase !== "playing" && canStart) {
         startGame(game);
         setSave(null);
       }
@@ -163,9 +176,20 @@ export default function Pinball() {
         setSave(null);
       }
 
+      // The pinball table is paused while pachinko is on.
+      let drop = pachinko ? snap.start : false;
       while (acc >= STEP) {
-        stepGame(game, snap, STEP);
+        if (pachinko) {
+          stepPachinko(pachinko, drop, STEP);
+          drop = false;
+        } else {
+          stepGame(game, snap, STEP);
+        }
         acc -= STEP;
+      }
+      if (pachinko) {
+        for (const e of pachinko.events) sound.play(e);
+        pachinko.events.length = 0;
       }
 
       for (const e of game.events) {
@@ -187,7 +211,8 @@ export default function Pinball() {
       }
       prevPhase = game.phase;
 
-      render(ctx, game, now / 1000);
+      if (pachinko) renderPachinko(ctx, pachinko);
+      else render(ctx, game, now / 1000);
 
       const goal = game.prompt.goal;
       const next: Hud = {
@@ -204,6 +229,7 @@ export default function Pinball() {
         high,
         gamepad: snap.gamepad,
         soundReady: sound.ready,
+        addons: pachinko ? [...pachinko.wins] : [],
       };
       const key = JSON.stringify(next);
       if (key !== prevHud) {
@@ -260,10 +286,15 @@ export default function Pinball() {
     <div className="wrap">
       <div className="table-wrap">
         <canvas ref={canvasRef} />
+        {stage && (
+          <div className="mode-banner">
+            {stage === "main" ? "PINBALL PAUSED · PACHINKO WHILE CLAUDE BUILDS" : "PACHINKO · CLAUDE IS ADDING YOUR ADD-ONS"}
+          </div>
+        )}
         {!name && <NameCard onSubmit={setName} />}
       </div>
       <aside className="hud">
-        <h1>PROMPT PINBALL</h1>
+        <h1>{stage ? "PROMPT PACHINKO" : "PROMPT PINBALL"}</h1>
         {name && <div className="muted small">Playing as {name}</div>}
 
         <section className={`card prompt-card${prompt.done ? " done" : ""}`}>
@@ -307,8 +338,10 @@ export default function Pinball() {
             prompt={prompt.text}
             ready={prompt.done && !!prompt.text}
             savedRun={save?.id ? { id: save.id, prompt: save.run.prompt } : null}
+            addons={hud.addons}
+            onStage={onStage}
           />
-          {prompt.done && (
+          {prompt.done && !stage && (
             <button className="new-game" onClick={newGame}>
               NEW GAME
             </button>
