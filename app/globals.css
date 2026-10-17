@@ -1,0 +1,10 @@
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; background: #000; color: #9f9; font-family: ui-monospace, Consolas, monospace; }
+.wrap { display: flex; gap: 24px; justify-content: center; align-items: flex-start; padding: 16px; min-height: 100%; flex-wrap: wrap; }
+canvas { display: block; border: 1px solid #262; }
+.hud { min-width: 220px; font-size: 14px; line-height: 1.6; }
+.hud h1 { font-size: 18px; font-weight: normal; margin: 0 0 12px; letter-spacing: 2px; }
+.hud .big { font-size: 28px; color: #cfc; }
+.hud .dim { color: #585; }
+.hud table { border-collapse: collapse; margin-top: 12px; }
+.hud td { padding: 0 12px 0 0; vertical-align: top; }
