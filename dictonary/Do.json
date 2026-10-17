@@ -1,0 +1,31 @@
+{
+  "templates": [
+    "Build me a {thing}.",
+    "Create a {thing}.",
+    "Make a {thing}.",
+    "Spit out a {thing}.",
+    "Erect a {thing}.",
+    "Construct a {thing}.",
+    "Implement a {thing}.",
+    "Assemble a {thing}.",
+    "Fabricate a {thing}."
+  ],
+  "slots": {
+    "thing": [
+      "Website",
+      "Educational Tool",
+      "Application",
+      "Software",
+      "Game",
+      "Social Media",
+      "House",
+      "Picture",
+      "Algorithm",
+      "Platform",
+      "API",
+      "MCP",
+      "AI Agent",
+      "Interactive Personality"
+    ]
+  }
+}
