@@ -1,15 +1,20 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import NameCard from "@/components/NameCard";
+import ScoreStatus from "@/components/ScoreStatus";
+import { usePlayer } from "@/components/PlayerProvider";
 import BuildPanel from "@/components/BuildPanel";
 import { H, W, createGame, startGame, stepGame } from "@/lib/game";
 import { Input } from "@/lib/input";
 import { maskedGoal, promptText } from "@/lib/prompt/run";
 import { render } from "@/lib/render";
+import { type Run, type SaveState, saveRun } from "@/lib/scores";
 import { Sound } from "@/lib/sound";
 import { buildTable } from "@/lib/table";
 
 const STEP = 1 / 120;
+const TAB_BAR = 44; // height of the tab bar in app/layout.tsx
 
 // Controller rumble per game event: [strong motor, weak motor, milliseconds].
 const RUMBLE: Record<string, [number, number, number]> = {
@@ -75,11 +80,22 @@ function saveMuted(muted: boolean) {
 }
 
 export default function Pinball() {
+  const { name, setName } = usePlayer();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const soundRef = useRef<Sound | null>(null);
   const promptRef = useRef<HTMLDivElement>(null);
   const [muted, setMuted] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [save, setSave] = useState<SaveState | null>(null);
+  const publish = (run: Run) => {
+    setSave({ status: "saving", run });
+    saveRun(name, run).then(ok => setSave({ status: ok ? "saved" : "error", run }));
+  };
+  // The game loop is set up once per mount, so it reaches the latest values through these refs.
+  const publishRef = useRef(publish);
+  publishRef.current = publish;
+  const nameRef = useRef(name);
+  nameRef.current = name;
   const [hud, setHud] = useState<Hud>({
     prompt: { text: "", sections: 0, started: false, done: false, goal: null },
     score: 0,
@@ -109,7 +125,7 @@ export default function Pinball() {
     window.addEventListener("pointerdown", unlock);
 
     const resize = () => {
-      const scale = Math.min((window.innerHeight - 32) / H, (window.innerWidth - 32) / W);
+      const scale = Math.min((window.innerHeight - 32 - TAB_BAR) / H, (window.innerWidth - 32) / W);
       const dpr = window.devicePixelRatio || 1;
       canvas.style.width = `${W * scale}px`;
       canvas.style.height = `${H * scale}px`;
@@ -135,7 +151,11 @@ export default function Pinball() {
       if (snap.start) sound.unlock();
       // Brief lockout after game over so a last-second flip doesn't instantly restart.
       const canStart = game.phase === "ready" || now - gameOverAt > 1500;
-      if (snap.start && game.phase !== "playing" && canStart) startGame(game);
+      // No launching until a player name is entered.
+      if (snap.start && nameRef.current && game.phase !== "playing" && canStart) {
+        startGame(game);
+        setSave(null);
+      }
 
       while (acc >= STEP) {
         stepGame(game, snap, STEP);
@@ -153,6 +173,11 @@ export default function Pinball() {
       if (game.phase === "gameover" && prevPhase === "playing") {
         saveHigh(high);
         gameOverAt = now;
+        publishRef.current({
+          score: game.score,
+          sections: game.prompt.state.segments.length,
+          prompt: promptText(game.prompt),
+        });
       }
       prevPhase = game.phase;
 
@@ -221,9 +246,13 @@ export default function Pinball() {
 
   return (
     <div className="wrap">
-      <canvas ref={canvasRef} />
+      <div className="table-wrap">
+        <canvas ref={canvasRef} />
+        {!name && <NameCard onSubmit={setName} />}
+      </div>
       <aside className="hud">
         <h1>PROMPT PINBALL</h1>
+        {name && <div className="muted small">Playing as {name}</div>}
 
         <section className={`card prompt-card${prompt.done ? " done" : ""}`}>
           <div className="card-head">
@@ -263,6 +292,8 @@ export default function Pinball() {
           )}
           <BuildPanel prompt={prompt.text} ready={prompt.done && !!prompt.text} />
         </section>
+
+        {save && <ScoreStatus {...save} onRetry={() => publish(save.run)} />}
 
         <section className="tiles">
           <div className="tile yellow">

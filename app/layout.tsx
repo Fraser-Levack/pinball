@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import Nav from "@/components/Nav";
+import { PlayerProvider } from "@/components/PlayerProvider";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -8,7 +10,12 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        <PlayerProvider>
+          <Nav />
+          {children}
+        </PlayerProvider>
+      </body>
     </html>
   );
 }

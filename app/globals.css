@@ -15,7 +15,7 @@
 html, body { margin: 0; min-height: 100%; background: var(--cream); color: var(--ink); font-family: var(--sans); }
 
 .wrap { display: flex; gap: 28px; justify-content: center; align-items: flex-start; padding: 16px; flex-wrap: wrap; }
-canvas { display: block; border-radius: 20px; box-shadow: 0 0 0 1px var(--line), 6px 8px 0 rgba(18, 70, 79, 0.08); }
+canvas { display: block; border-radius: 20px; }
 
 /* ---- Side panel ---- */
 .hud { width: 420px; max-width: 100%; display: flex; flex-direction: column; gap: 14px; }
@@ -94,3 +94,33 @@ button { font: inherit; cursor: pointer; border: none; color: var(--ink); }
 .builder .output { background: var(--cream); border-radius: 18px; border-top: 10px solid var(--mint); padding: 16px 18px; margin: 16px 0; min-height: 4em; font-size: 18px; white-space: pre-wrap; box-shadow: 0 0 0 1px var(--line); }
 .builder table { border-collapse: collapse; }
 .builder td { padding: 2px 12px 2px 0; vertical-align: top; }
+
+/* ---- Tab bar ---- */
+.tabs { height: 44px; display: flex; gap: 6px; align-items: center; padding: 0 16px; background: var(--cream); box-shadow: 0 1px 0 var(--line); }
+.tabs a { font-size: 12px; font-weight: 800; letter-spacing: 1.5px; padding: 6px 14px; border-radius: 999px; color: var(--ink); text-decoration: none; background: rgba(18, 70, 79, 0.08); }
+.tabs a.active { background: var(--teal); color: #fff; }
+
+/* ---- Post score (after a game) ---- */
+.submit-row { display: flex; gap: 8px; }
+.submit-row input { flex: 1; min-width: 0; font: inherit; padding: 8px 14px; border-radius: 999px; border: none; background: #fff; box-shadow: 0 0 0 1px var(--line); }
+.submit-row button { padding: 8px 18px; border-radius: 999px; background: var(--pink); color: #fff; font-weight: 800; }
+.submit-row button:disabled { opacity: 0.4; cursor: default; }
+.card .error { color: var(--pink); }
+.retry { margin-left: 4px; padding: 4px 12px; border-radius: 999px; background: var(--pink); color: #fff; font-weight: 800; font-size: 12px; }
+
+/* ---- Name card (floats above the table until a name is entered) ---- */
+.table-wrap { position: relative; }
+.name-card { position: absolute; top: 16px; left: 50%; transform: translateX(-50%); width: min(300px, calc(100% - 32px)); z-index: 1; display: flex; flex-direction: column; gap: 8px; padding: 14px 16px; border-radius: 18px; background: var(--cream); box-shadow: 0 8px 24px rgba(18, 70, 79, 0.25); }
+.name-card label { font-size: 13px; font-weight: 800; letter-spacing: 1px; color: var(--teal); }
+.name-card .submit-row button { background: var(--mint); padding: 8px 18px; border-radius: 999px; font-weight: 800; }
+.name-card .submit-row button:disabled { opacity: 0.4; cursor: default; }
+
+/* ---- Leaderboard ---- */
+.board { padding: 0; margin: 0; list-style: none; }
+.board li { padding: 10px 0; border-bottom: 1px solid var(--line); }
+.board-row { display: flex; gap: 12px; align-items: baseline; }
+.rank { width: 2em; color: var(--ink-soft); font-weight: 800; }
+.board-name { flex: 1; min-width: 0; font-weight: 700; overflow: hidden; text-overflow: ellipsis; }
+.board-score { font-weight: 800; font-variant-numeric: tabular-nums; }
+.board summary { cursor: pointer; margin-top: 4px; }
+.board-prompt { white-space: pre-wrap; font: inherit; font-size: 15px; margin: 8px 0 0; }
