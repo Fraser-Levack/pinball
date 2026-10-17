@@ -1,6 +1,10 @@
 {
   "templates": [
     "About a {thing}.",
+    "About a {thing}.",
+    "About a {thing} and a {thing}.",
+    "About a {thing} inside a {thing}.",
+    "About a {thing} that is afraid of a {thing}.",
     "About a {concept}.",
     "About a {person}.",
     "About a {place}.",

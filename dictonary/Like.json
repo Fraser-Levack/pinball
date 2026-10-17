@@ -21,22 +21,7 @@
     "With the theme of {person}."
   ],
   "slots": {
-    "thing": [
-      "Website",
-      "Educational Tool",
-      "Application",
-      "Software",
-      "Game",
-      "Social Media",
-      "House",
-      "Picture",
-      "Algorithm",
-      "Platform",
-      "API",
-      "MCP",
-      "AI Agent",
-      "Interactive Personality"
-    ],
+    "thing": ["{@noun}"],
     "app": [
       "Facebook",
       "Instagram",

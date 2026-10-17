@@ -9,6 +9,8 @@
       "loop": [
         { "section": "Conjunctions", "joiner": true },
         "Like",
+        { "section": "Conjunctions", "joiner": true },
+        "About",
         { "section": "Adjectives", "chance": 0.5 }
       ]
     }
