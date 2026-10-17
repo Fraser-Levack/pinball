@@ -2,12 +2,14 @@
 // newline-delimited JSON BuildEvents (see lib/build/claude.ts).
 
 import { type AddonPass, type BuildEvent, BusyError, buildDir, isBuilding, startBuild } from "@/lib/build/claude";
+import { BUILDS_ENABLED, BUILDS_OFF_MESSAGE } from "@/lib/build/enabled";
 import { isJson, isLocalRequest, refuse } from "@/lib/build/local";
 import { MAX_ADDONS, addonById } from "@/lib/pachinko/addons";
 
 const MAX_PROMPT_LENGTH = 4000;
 
 export async function POST(request: Request) {
+  if (!BUILDS_ENABLED) return refuse(404, BUILDS_OFF_MESSAGE);
   if (!isLocalRequest(request)) return refuse(403, "Builds can only be started from the game on this computer.");
   if (!isJson(request)) return refuse(415, "Send the prompt as JSON.");
 

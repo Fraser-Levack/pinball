@@ -16,7 +16,7 @@ import path from "node:path";
 import { addonById } from "../pachinko/addons";
 
 /** Where builds go: one folder per build. Override with PINBALL_BUILD_DIR. */
-export const BUILD_ROOT = path.resolve(process.env.PINBALL_BUILD_DIR || path.join(os.homedir(), "pinball-builds"));
+export const BUILD_ROOT = path.resolve(/*turbopackIgnore: true*/ process.env.PINBALL_BUILD_DIR || path.join(os.homedir(), "pinball-builds"));
 const TIME_LIMIT_MS = 15 * 60 * 1000;
 export const PROMPT_FILE = "pinball-prompt.txt"; // the prompt is saved here after the build, for reference
 export const ADDONS_FILE = "pinball-addons.txt"; // add-ons from the pachinko pass, if any. Kept out of the prompt file, which sharing matches against the run's prompt
@@ -253,7 +253,7 @@ export function startBuild(prompt: string, emit: (e: BuildEvent) => void, pass?:
     delete env.CLAUDECODE;
 
     // The prompt goes in on stdin, so it never passes through a shell or command-line quoting.
-    child = spawn(claude.cmd, args, { cwd: dir, env, stdio: ["pipe", "pipe", "pipe"], windowsHide: true });
+    child = spawn(/*turbopackIgnore: true*/ claude.cmd, args, { cwd: dir, env, stdio: ["pipe", "pipe", "pipe"], windowsHide: true });
     shared.__pinballBuild = child;
     timer = setTimeout(() => stop(`Build stopped: it ran for more than ${TIME_LIMIT_MS / 60000} minutes.`), TIME_LIMIT_MS);
 
@@ -352,7 +352,7 @@ export async function openBuild(id: string, target: "page" | "folder"): Promise<
       : process.platform === "darwin"
         ? ["open", [what]]
         : ["xdg-open", [what]];
-  const child = spawn(cmd, args, { detached: true, stdio: "ignore", windowsHide: true });
+  const child = spawn(/*turbopackIgnore: true*/ cmd, args, { detached: true, stdio: "ignore", windowsHide: true });
   child.on("error", () => {});
   child.unref();
   return true;

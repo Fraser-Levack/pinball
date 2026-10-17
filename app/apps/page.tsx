@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { unstable_rethrow } from "next/navigation";
+import { BUILDS_ENABLED } from "@/lib/build/enabled";
 import { type SharedApp, appTitle, listApps } from "@/lib/builds";
 
 export default async function AppsPage() {
@@ -6,6 +8,7 @@ export default async function AppsPage() {
   try {
     apps = await listApps();
   } catch (e) {
+    unstable_rethrow(e); // let Next's own "render this page per request" signal through
     console.error(e); // server-side: shows in the `npm run dev` terminal, not the browser
   }
 
@@ -13,7 +16,7 @@ export default async function AppsPage() {
     <div className="builder">
       <div className="apps-head">
         <h1>APPS</h1>
-        <Link href="/apps/add" className="dim small">+ ADD AN APP</Link>
+        {BUILDS_ENABLED && <Link href="/apps/add" className="dim small">+ ADD AN APP</Link>}
       </div>
       {!apps ? (
         <p className="dim">Could not load apps.</p>

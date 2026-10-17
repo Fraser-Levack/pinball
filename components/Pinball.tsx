@@ -5,6 +5,7 @@ import NameCard from "@/components/NameCard";
 import ScoreStatus from "@/components/ScoreStatus";
 import { usePlayer } from "@/components/PlayerProvider";
 import BuildPanel, { type BuildStage } from "@/components/BuildPanel";
+import { BUILDS_ENABLED } from "@/lib/build/enabled";
 import { H, W, createGame, resetGame, startGame, stepGame } from "@/lib/game";
 import { Input } from "@/lib/input";
 import { type Pachinko, createPachinko, renderPachinko, stepPachinko } from "@/lib/pachinko/game";
@@ -334,13 +335,15 @@ export default function Pinball() {
             </button>
           )}
           {/* Kept mounted across games, so the last build stays reachable while the next game is played. */}
-          <BuildPanel
-            prompt={prompt.text}
-            ready={prompt.done && !!prompt.text}
-            savedRun={save?.id ? { id: save.id, prompt: save.run.prompt } : null}
-            addons={hud.addons}
-            onStage={onStage}
-          />
+          {BUILDS_ENABLED && (
+            <BuildPanel
+              prompt={prompt.text}
+              ready={prompt.done && !!prompt.text}
+              savedRun={save?.id ? { id: save.id, prompt: save.run.prompt } : null}
+              addons={hud.addons}
+              onStage={onStage}
+            />
+          )}
           {prompt.done && !stage && (
             <button className="new-game" onClick={newGame}>
               NEW GAME

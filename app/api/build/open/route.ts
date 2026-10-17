@@ -2,9 +2,11 @@
 // its index.html in the default browser, or the folder in the file manager.
 
 import { openBuild } from "@/lib/build/claude";
+import { BUILDS_ENABLED, BUILDS_OFF_MESSAGE } from "@/lib/build/enabled";
 import { isJson, isLocalRequest, refuse } from "@/lib/build/local";
 
 export async function POST(request: Request) {
+  if (!BUILDS_ENABLED) return refuse(404, BUILDS_OFF_MESSAGE);
   if (!isLocalRequest(request)) return refuse(403, "Builds can only be opened from the game on this computer.");
   if (!isJson(request)) return refuse(415, "Send the request as JSON.");
 

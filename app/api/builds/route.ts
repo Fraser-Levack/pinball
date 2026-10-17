@@ -4,11 +4,13 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { PROMPT_FILE, buildDir, listFiles } from "@/lib/build/claude";
+import { BUILDS_ENABLED, BUILDS_OFF_MESSAGE } from "@/lib/build/enabled";
 import { isJson, isLocalRequest, refuse } from "@/lib/build/local";
 import { MAX_HTML_BYTES, MAX_SUMMARY, isUuid, titleFromHtml } from "@/lib/builds";
 import { supabase } from "@/lib/supabase";
 
 export async function POST(request: Request) {
+  if (!BUILDS_ENABLED) return refuse(404, BUILDS_OFF_MESSAGE);
   if (!isLocalRequest(request)) return refuse(403, "Builds can only be shared from the game on this computer.");
   if (!isJson(request)) return refuse(415, "Send the request as JSON.");
 

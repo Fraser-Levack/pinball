@@ -1,7 +1,10 @@
 import Link from "next/link";
+import { notFound } from "next/navigation";
 import AddAppForm from "@/components/AddAppForm";
+import { BUILDS_ENABLED } from "@/lib/build/enabled";
 
 export default function AddAppPage() {
+  if (!BUILDS_ENABLED) notFound();
   return (
     <div className="builder">
       <Link href="/apps" className="dim small">← ALL APPS</Link>

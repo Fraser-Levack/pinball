@@ -3,6 +3,7 @@
 // prompt if there is one; otherwise a run is created for it from the name and score given.
 
 import { randomUUID } from "node:crypto";
+import { BUILDS_ENABLED, BUILDS_OFF_MESSAGE } from "@/lib/build/enabled";
 import { isJson, isLocalRequest, refuse } from "@/lib/build/local";
 import { MAX_HTML_BYTES, MAX_SUMMARY, titleFromHtml } from "@/lib/builds";
 import { supabase } from "@/lib/supabase";
@@ -15,6 +16,7 @@ const MAX_PROMPT = 20000;
 const str = (v: unknown) => (typeof v === "string" ? v.trim() : "");
 
 export async function POST(request: Request) {
+  if (!BUILDS_ENABLED) return refuse(404, BUILDS_OFF_MESSAGE);
   if (!isLocalRequest(request)) return refuse(403, "Apps can only be added from this computer.");
   if (!isJson(request)) return refuse(415, "Send the request as JSON.");
 
