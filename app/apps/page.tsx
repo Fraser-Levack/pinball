@@ -11,7 +11,10 @@ export default async function AppsPage() {
 
   return (
     <div className="builder">
-      <h1>APPS</h1>
+      <div className="apps-head">
+        <h1>APPS</h1>
+        <Link href="/apps/add" className="dim small">+ ADD AN APP</Link>
+      </div>
       {!apps ? (
         <p className="dim">Could not load apps.</p>
       ) : apps.featured.length + apps.recent.length === 0 ? (

@@ -14,6 +14,8 @@ export interface SharedApp {
 const FIELDS = "id,title,summary,featured,created_at,scores(player_name,score,prompt)";
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 export const MAX_TITLE = 60;
+export const MAX_HTML_BYTES = 1_000_000;
+export const MAX_SUMMARY = 600;
 
 export const isUuid = (s: string) => UUID_RE.test(s);
 

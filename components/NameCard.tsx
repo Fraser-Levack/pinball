@@ -2,7 +2,10 @@
 
 import { useState } from "react";
 
-// Floats above the table until a name is entered. The ball can't launch before then.
+// Floats above the table until a name is entered (or the player picks anonymous). The ball can't
+// launch before then.
+
+export const ANONYMOUS = "Anonymous"; // shown on the leaderboard for anonymous runs
 export default function NameCard({ onSubmit }: { onSubmit: (name: string) => void }) {
   const [value, setValue] = useState("");
   const trimmed = value.trim();
@@ -27,6 +30,9 @@ export default function NameCard({ onSubmit }: { onSubmit: (name: string) => voi
         />
         <button disabled={!trimmed}>Play</button>
       </div>
+      <button type="button" className="anon" onClick={() => onSubmit(ANONYMOUS)}>
+        Play anonymously
+      </button>
     </form>
   );
 }

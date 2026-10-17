@@ -5,11 +5,8 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { PROMPT_FILE, buildDir, listFiles } from "@/lib/build/claude";
 import { isJson, isLocalRequest, refuse } from "@/lib/build/local";
-import { isUuid, titleFromHtml } from "@/lib/builds";
+import { MAX_HTML_BYTES, MAX_SUMMARY, isUuid, titleFromHtml } from "@/lib/builds";
 import { supabase } from "@/lib/supabase";
-
-const MAX_HTML_BYTES = 1_000_000;
-const MAX_SUMMARY = 600;
 
 export async function POST(request: Request) {
   if (!isLocalRequest(request)) return refuse(403, "Builds can only be shared from the game on this computer.");

@@ -118,6 +118,8 @@ button { font: inherit; cursor: pointer; border: none; color: var(--ink); }
 .name-card label { font-size: 13px; font-weight: 800; letter-spacing: 1px; color: var(--teal); }
 .name-card .submit-row button { background: var(--mint); padding: 8px 18px; border-radius: 999px; font-weight: 800; }
 .name-card .submit-row button:disabled { opacity: 0.4; cursor: default; }
+.name-card .anon { align-self: center; padding: 2px 8px; background: none; color: var(--ink-soft); font-size: 13px; font-weight: 700; text-decoration: underline; }
+.name-card .anon:hover { color: var(--ink); }
 
 /* ---- Leaderboard ---- */
 .board { padding: 0; margin: 0; list-style: none; }
@@ -140,6 +142,20 @@ button { font: inherit; cursor: pointer; border: none; color: var(--ink); }
 .app-meta { display: flex; justify-content: space-between; gap: 8px; margin-top: auto; padding-top: 4px; font-size: 11px; font-weight: 700; color: var(--ink-soft); }
 .app-meta span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .app-summary { line-height: 1.45; }
+.apps-head { display: flex; justify-content: space-between; align-items: baseline; }
+
+/* Adding an app by hand */
+.add-app { display: flex; flex-direction: column; gap: 14px; margin-top: 16px; }
+.add-app label { display: flex; flex-direction: column; gap: 6px; }
+.add-app label > span { font-size: 12px; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase; }
+.add-app textarea, .add-app input:not([type="file"]) { font: inherit; font-size: 14px; padding: 8px 12px; border-radius: 12px; border: none; background: #fff; box-shadow: 0 0 0 1px var(--line); }
+.add-app textarea { resize: vertical; }
+.add-app label:first-child textarea { font-family: var(--mono); font-size: 12px; }
+.add-app fieldset { border: none; margin: 0; padding: 0; }
+.add-app legend { padding: 0; margin-bottom: 8px; }
+.add-app-row { display: grid; grid-template-columns: 2fr 1fr; gap: 10px; }
+.add-app-link { background: var(--mint); padding: 8px 16px; border-radius: 999px; font-weight: 800; color: var(--ink); text-decoration: none; }
+.add-app-error { color: var(--pink); font-weight: 600; }
 .app-view-title { font-size: 20px; font-weight: 800; margin: 4px 0; }
 .app-view { max-width: 1000px; }
 .app-view-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
