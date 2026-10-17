@@ -32,10 +32,9 @@ function formatTime(seconds: number) {
 interface Props {
   prompt: string;
   ready: boolean;
-  onBuildingChange?: (building: boolean) => void;
 }
 
-export default function BuildPanel({ prompt, ready, onBuildingChange }: Props) {
+export default function BuildPanel({ prompt, ready }: Props) {
   const [phase, setPhase] = useState<Phase>("idle");
   const [log, setLog] = useState<string[]>([]);
   const [files, setFiles] = useState<string[]>([]);
@@ -45,8 +44,6 @@ export default function BuildPanel({ prompt, ready, onBuildingChange }: Props) {
   const [elapsed, setElapsed] = useState(0);
   const [builtPrompt, setBuiltPrompt] = useState<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
-
-  useEffect(() => onBuildingChange?.(phase === "running"), [phase, onBuildingChange]);
 
   // Stop the build if the game page goes away.
   useEffect(() => () => abortRef.current?.abort(), []);
@@ -156,7 +153,8 @@ export default function BuildPanel({ prompt, ready, onBuildingChange }: Props) {
     }
   };
 
-  if (!ready && phase === "idle") return null;
+  // During the next game, keep showing a finished or running build; drop a failed one.
+  if (!ready && (phase === "idle" || phase === "error")) return null;
 
   const canBuild = ready && phase !== "running" && !!prompt.trim();
   const hasPage = result?.files.includes("index.html") ?? false;
@@ -190,8 +188,13 @@ export default function BuildPanel({ prompt, ready, onBuildingChange }: Props) {
       {phase === "done" && result && (
         <>
           <div className="build-head">
-            <span className="chip mint">BUILT</span>
+            <span className="chip mint">{ready ? "BUILT" : "LAST BUILD"}</span>
           </div>
+          {!ready && builtPrompt && (
+            <div className="muted small build-prompt" title={builtPrompt}>
+              {builtPrompt}
+            </div>
+          )}
           <div className="build-summary">{result.summary}</div>
           <FileList files={result.files} />
           <div className="build-actions">

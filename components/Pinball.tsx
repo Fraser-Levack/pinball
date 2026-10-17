@@ -96,12 +96,6 @@ export default function Pinball() {
   publishRef.current = publish;
   const nameRef = useRef(name);
   nameRef.current = name;
-  // Bumped for each new game so the build panel starts empty. Kept while a build is running, so
-  // starting another game doesn't cancel it.
-  const [gameNo, setGameNo] = useState(0);
-  const [building, setBuilding] = useState(false);
-  const buildingRef = useRef(building);
-  buildingRef.current = building;
   const resetRef = useRef(false); // set by the NEW GAME button, handled by the game loop
   const [hud, setHud] = useState<Hud>({
     prompt: { text: "", sections: 0, started: false, done: false, goal: null },
@@ -162,13 +156,11 @@ export default function Pinball() {
       if (snap.start && nameRef.current && game.phase !== "playing" && canStart) {
         startGame(game);
         setSave(null);
-        if (!buildingRef.current) setGameNo(n => n + 1);
       }
       if (resetRef.current) {
         resetRef.current = false;
         resetGame(game);
         setSave(null);
-        setGameNo(n => n + 1);
       }
 
       while (acc >= STEP) {
@@ -310,15 +302,11 @@ export default function Pinball() {
               {copied ? "COPIED!" : "COPY PROMPT"}
             </button>
           )}
-          <BuildPanel
-            key={gameNo}
-            prompt={prompt.text}
-            ready={prompt.done && !!prompt.text}
-            onBuildingChange={setBuilding}
-          />
+          {/* Kept mounted across games, so the last build stays reachable while the next game is played. */}
+          <BuildPanel prompt={prompt.text} ready={prompt.done && !!prompt.text} />
           {prompt.done && (
-            <button className="new-game" onClick={newGame} disabled={building}>
-              {building ? "WAIT FOR THE BUILD TO FINISH" : "NEW GAME"}
+            <button className="new-game" onClick={newGame}>
+              NEW GAME
             </button>
           )}
         </section>

@@ -64,6 +64,7 @@ button { font: inherit; cursor: pointer; border: none; color: var(--ink); }
 .build-files .chip { font-family: var(--mono); font-weight: 600; letter-spacing: 0; }
 .build-summary { font-size: 15px; line-height: 1.5; }
 .build-path { font-family: var(--mono); word-break: break-all; }
+.build-prompt { margin-bottom: 6px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .build-fail { color: var(--pink); font-weight: 600; line-height: 1.45; }
 .build-actions { display: flex; gap: 8px; margin-top: 12px; }
 .build-primary { flex: 1; padding: 12px; border-radius: 14px; background: var(--mint); font-size: 15px; font-weight: 800; letter-spacing: 1.5px; }
