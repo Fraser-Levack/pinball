@@ -1,0 +1,20 @@
+{
+  "templates": [
+    "About a {thing}.",
+    "About a {concept}.",
+    "About a {person}.",
+    "About a {place}.",
+    "About a {event}.",
+    "About a {topic}.",
+    "About a {action}."
+  ],
+  "slots": {
+    "thing": ["{@noun}"],
+    "concept": [],
+    "person": [],
+    "place": [],
+    "event": [],
+    "topic": [],
+    "action": []
+  }
+}

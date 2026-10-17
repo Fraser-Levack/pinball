@@ -1,5 +1,27 @@
 {
-  "templates": [],
+  "templates": [
+    "and",
+    "but",
+    "or",
+    "so",
+    "because",
+    "although",
+    "however",
+    "therefore",
+    "meanwhile",
+    "in addition",
+    "as a result",
+    "on the other hand",
+    "in contrast",
+    "nevertheless",
+    "furthermore",
+    "consequently",
+    "thus",
+    "hence",
+    "otherwise",
+    "similarly",
+    "likewise"
+  ],
   "slots": {}
 }
 

@@ -1,3 +1,21 @@
 {
-  "order": ["Start", "Do", "In", "Like", "Finish"]
+  "flow": [
+    "Start",
+    "Do",
+    "About",
+    "In",
+    "Like",
+    {
+      "loop": [
+        { "section": "Conjunctions", "joiner": true },
+        "Like",
+        { "section": "Adjectives", "chance": 0.5 }
+      ]
+    }
+  ],
+  "finish": "Finish",
+  "globals": {
+    "adjective": "Adjectives",
+    "conjunction": "Conjunctions"
+  }
 }

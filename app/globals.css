@@ -8,3 +8,13 @@ canvas { display: block; border: 1px solid #262; }
 .hud .dim { color: #585; }
 .hud table { border-collapse: collapse; margin-top: 12px; }
 .hud td { padding: 0 12px 0 0; vertical-align: top; }
+.builder { max-width: 760px; margin: 0 auto; padding: 16px; font-size: 14px; line-height: 1.6; }
+.builder h1 { font-size: 18px; font-weight: normal; margin: 0 0 12px; letter-spacing: 2px; }
+.builder .dim { color: #585; }
+.builder .controls { display: flex; gap: 8px; flex-wrap: wrap; }
+.builder button { background: #010; color: #9f9; border: 1px solid #3a3; font: inherit; padding: 6px 14px; cursor: pointer; }
+.builder button:hover:not(:disabled) { background: #131; }
+.builder button:disabled { color: #353; border-color: #232; cursor: default; }
+.builder .output { border: 1px solid #262; padding: 12px; margin: 12px 0; min-height: 4em; color: #cfc; white-space: pre-wrap; }
+.builder table { border-collapse: collapse; }
+.builder td { padding: 0 12px 0 0; vertical-align: top; }

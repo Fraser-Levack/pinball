@@ -1,4 +1,49 @@
 {
-  "templates": [],
-  "slots": {}
+  "templates": [
+    "In the programming language {language}.",
+    "In the framework {framework}.",
+    "In the environment {environment}.",
+    "In the programming language {language} and framework {framework}.",
+    "In the programming language {language} and environment {environment}.",
+    "In the framework {framework} and environment {environment}.",
+    "In the programming language {language}, framework {framework}, and environment {environment}."
+  ],
+  "slots": {
+    "language": [
+      "Python",
+      "JavaScript",
+      "Java",
+      "C++",
+      "C#",
+      "Ruby",
+      "Go",
+      "Rust",
+      "Swift",
+      "Kotlin"
+    ],
+    "framework": [
+      "React",
+      "Angular",
+      "Vue.js",
+      "Django",
+      "Flask",
+      "Spring Boot",
+      "Express.js",
+      "Ruby on Rails",
+      "ASP.NET Core",
+      "Laravel"
+    ],
+    "environment": [
+      "Node.js",
+      "Docker",
+      "Kubernetes",
+      "AWS",
+      "Azure",
+      "Google Cloud Platform",
+      "Heroku",
+      "Firebase",
+      "Vercel",
+      "Netlify"
+    ]
+  }
 }
