@@ -12,14 +12,12 @@
     "language": [
       "Python",
       "JavaScript",
+      "TypeScript",
       "Java",
       "C++",
-      "C#",
-      "Ruby",
       "Go",
       "Rust",
-      "Swift",
-      "Kotlin"
+      "Haskell"
     ],
     "framework": [
       "React",

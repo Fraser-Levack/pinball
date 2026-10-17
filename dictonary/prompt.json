@@ -17,5 +17,6 @@
   "globals": {
     "adjective": "Adjectives",
     "conjunction": "Conjunctions"
-  }
+  },
+  "system": "To your best ability, try complete the following request, interprating and assuming if needed. Don't ask any follow up questions and ensure that generated project is able to compile."
 }
