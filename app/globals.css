@@ -143,7 +143,14 @@ button { font: inherit; cursor: pointer; border: none; color: var(--ink); }
 .app-view-title { font-size: 20px; font-weight: 800; margin: 4px 0; }
 .app-view { max-width: 1000px; }
 .app-view-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-.app-frame { display: block; width: 100%; height: min(75vh, 720px); margin: 14px 0; border: 0; border-radius: 18px; background: #fff; box-shadow: 0 0 0 1px var(--line); }
+.app-frame { display: block; width: 100%; height: min(75vh, 720px); margin: 0 0 14px; border: 0; border-radius: 18px; background: #fff; box-shadow: 0 0 0 1px var(--line); }
+.app-frame-bar { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px; margin: 14px 0 8px; }
+.app-frame-actions { display: flex; gap: 8px; }
+.app-frame-tab { padding: 8px 16px; border-radius: 999px; background: rgba(18, 70, 79, 0.08); color: var(--ink); font-weight: 800; text-decoration: none; }
+.app-frame-tab:hover, .app-frame-bar button:hover { filter: brightness(1.05); }
+.app-frame-bar kbd { font-family: var(--mono); font-size: 11px; padding: 1px 6px; border-radius: 6px; background: rgba(18, 70, 79, 0.08); }
+.app-frame-wrap.full { background: #fff; }
+.app-frame-wrap.full .app-frame { width: 100vw; height: 100vh; margin: 0; border-radius: 0; box-shadow: none; }
 .build-shared { margin-top: 8px; font-weight: 600; }
 
 /* ---- Pachinko (replaces the table while Claude builds) ---- */

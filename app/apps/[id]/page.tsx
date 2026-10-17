@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import AppFrame from "@/components/AppFrame";
 import { appTitle, getApp } from "@/lib/builds";
 
 export default async function AppPage(props: PageProps<"/apps/[id]">) {
@@ -18,14 +19,7 @@ export default async function AppPage(props: PageProps<"/apps/[id]">) {
       <div className="dim small">
         Built by {app.scores.player_name} from a {app.scores.score.toLocaleString()} point run
       </div>
-      {/* The page itself also sends a CSP sandbox header; this attribute is a second lock. */}
-      <iframe
-        className="app-frame"
-        src={`/apps/${app.id}/raw`}
-        sandbox="allow-scripts allow-pointer-lock"
-        referrerPolicy="no-referrer"
-        title={appTitle(app)}
-      />
+      <AppFrame id={app.id} title={appTitle(app)} />
       <details>
         <summary className="dim small">The prompt</summary>
         <pre className="board-prompt">{app.scores.prompt}</pre>
