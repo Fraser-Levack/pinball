@@ -46,6 +46,29 @@ button { font: inherit; cursor: pointer; border: none; color: var(--ink); }
 .copy:hover { filter: brightness(1.05); }
 .copy:disabled { opacity: 0.4; cursor: default; }
 
+/* Build it with Claude */
+.build { margin-top: 14px; }
+.build--running, .build--done, .build--error { padding: 14px; border-radius: 14px; box-shadow: 0 0 0 1px var(--line); }
+.build-head { display: flex; justify-content: space-between; align-items: center; font-size: 12px; margin-bottom: 10px; }
+.chip.teal-chip { background: var(--teal); color: #fff; }
+.chip.pink-chip { background: var(--pink); color: #fff; }
+.build-spinner { height: 6px; border-radius: 999px; margin-bottom: 10px; background: linear-gradient(90deg, rgba(27, 154, 170, 0.15) 25%, var(--teal) 50%, rgba(27, 154, 170, 0.15) 75%); background-size: 200% 100%; animation: build-sweep 1.2s linear infinite; }
+@keyframes build-sweep { from { background-position: 100% 0; } to { background-position: -100% 0; } }
+.build-log { list-style: none; margin: 0; padding: 0; font-size: 13px; line-height: 1.45; }
+.build-log li { padding: 3px 0; color: var(--ink-soft); }
+.build-log li:last-child { color: var(--ink); font-weight: 600; }
+.build-files { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+.build-files .chip { font-family: var(--mono); font-weight: 600; letter-spacing: 0; }
+.build-summary { font-size: 15px; line-height: 1.5; }
+.build-path { font-family: var(--mono); word-break: break-all; }
+.build-fail { color: var(--pink); font-weight: 600; line-height: 1.45; }
+.build-actions { display: flex; gap: 8px; margin-top: 12px; }
+.build-primary { flex: 1; padding: 12px; border-radius: 14px; background: var(--mint); font-size: 15px; font-weight: 800; letter-spacing: 1.5px; }
+.build-go { display: block; width: 100%; margin-top: 10px; }
+.build-secondary { padding: 10px 16px; border-radius: 14px; background: rgba(18, 70, 79, 0.08); font-size: 13px; font-weight: 800; letter-spacing: 1px; }
+.build--running .build-secondary { margin-top: 12px; }
+.build-primary:hover, .build-secondary:hover { filter: brightness(1.05); }
+
 /* Score tiles */
 .tiles { display: grid; grid-template-columns: 1.4fr 1fr 1fr; gap: 10px; }
 .tile { border-radius: 14px; padding: 10px 12px; background: var(--cream); box-shadow: 0 0 0 1px var(--line); }
