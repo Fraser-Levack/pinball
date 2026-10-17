@@ -1,42 +1,27 @@
-import { BALL_R, Game, H, Vec, W, flipperTip } from "./game";
+import { BRIGHT, COLOR, DIM, alpha, circle, label, line } from "./draw";
+import { type Game, H, LANE_X, PLUNGER_Y, PLUNGER_TRAVEL, W, inShooterLane } from "./game";
+import { BALL_R } from "./physics";
 
-const LINE = "#3c3";
-const BRIGHT = "#cfc";
-const DIM = "#163";
+const LINE_SOFT = alpha(COLOR.wall, 0.6);
 
-function capsule(ctx: CanvasRenderingContext2D, a: Vec, b: Vec, r: number) {
-  const ang = Math.atan2(b.y - a.y, b.x - a.x);
-  ctx.beginPath();
-  ctx.arc(a.x, a.y, r, ang + Math.PI / 2, ang + (3 * Math.PI) / 2);
-  ctx.arc(b.x, b.y, r, ang - Math.PI / 2, ang + Math.PI / 2);
-  ctx.closePath();
-  ctx.stroke();
-}
-
-function line(ctx: CanvasRenderingContext2D, a: Vec, b: Vec) {
-  ctx.beginPath();
-  ctx.moveTo(a.x, a.y);
-  ctx.lineTo(b.x, b.y);
-  ctx.stroke();
-}
-
-function circle(ctx: CanvasRenderingContext2D, p: Vec, r: number) {
-  ctx.beginPath();
-  ctx.arc(p.x, p.y, r, 0, Math.PI * 2);
-  ctx.stroke();
-}
-
-function centerText(ctx: CanvasRenderingContext2D, text: string, y: number, size: number) {
-  ctx.font = `${size}px ui-monospace, Consolas, monospace`;
-  ctx.textAlign = "center";
-  ctx.fillStyle = BRIGHT;
-  ctx.fillText(text, 230, y);
+/** Dark panel with lines of text, for the start and game over screens. */
+function panel(ctx: CanvasRenderingContext2D, y: number, lines: [string, number, string?][]) {
+  const h = lines.reduce((sum, [, size]) => sum + size * 1.6, 24);
+  ctx.fillStyle = "rgba(0,0,0,0.85)";
+  ctx.fillRect(40, y, 380, h);
+  ctx.strokeStyle = LINE_SOFT;
+  ctx.strokeRect(40, y, 380, h);
+  let cy = y + 12;
+  for (const [text, size, color] of lines) {
+    cy += size * 0.8;
+    label(ctx, text, { x: 230, y: cy }, size, color ?? BRIGHT);
+    cy += size * 0.8;
+  }
 }
 
 export function render(ctx: CanvasRenderingContext2D, g: Game, time: number) {
   ctx.fillStyle = "#000";
   ctx.fillRect(0, 0, W, H);
-  ctx.lineWidth = 1.5;
   ctx.lineJoin = "round";
 
   // Faint grid for that wireframe feel
@@ -46,75 +31,68 @@ export function render(ctx: CanvasRenderingContext2D, g: Game, time: number) {
   for (let y = 0; y <= H; y += 25) line(ctx, { x: 0, y }, { x: W, y });
   ctx.lineWidth = 1.5;
 
-  for (const w of g.walls) {
-    ctx.strokeStyle = w.flash > 0 ? BRIGHT : LINE;
-    if (w.r > 2) capsule(ctx, w.a, w.b, w.r);
-    else line(ctx, w.a, w.b);
-  }
-
-  // Plunger
-  const pw = g.plungerWall;
-  ctx.strokeStyle = LINE;
-  line(ctx, pw.a, pw.b);
+  // Plunger, with a power bar that goes green → yellow → red as it's pulled back
+  const py = PLUNGER_Y + g.plunger * PLUNGER_TRAVEL;
+  ctx.strokeStyle = COLOR.flipper;
+  line(ctx, { x: LANE_X, y: py }, { x: 480, y: py });
   ctx.strokeStyle = DIM;
   ctx.beginPath();
   const coils = 6;
-  for (let i = 0; i <= coils; i++) {
-    const y = pw.a.y + ((H - pw.a.y) * i) / coils;
-    ctx.lineTo(i % 2 ? 452 : 468, y);
-  }
+  for (let i = 0; i <= coils; i++) ctx.lineTo(i % 2 ? 452 : 468, py + ((H - py) * i) / coils);
   ctx.stroke();
   if (g.plunger > 0) {
-    ctx.fillStyle = LINE;
+    ctx.fillStyle = `hsl(${120 - g.plunger * 120}, 90%, 55%)`;
     ctx.fillRect(484, H - 10 - g.plunger * 200, 8, g.plunger * 200);
   }
 
-  for (const b of g.bumpers) {
-    ctx.strokeStyle = b.flash > 0 ? BRIGHT : LINE;
-    if (b.flash > 0) {
-      ctx.fillStyle = `rgba(150,255,150,${b.flash * 0.4})`;
-      ctx.beginPath();
-      ctx.arc(b.p.x, b.p.y, b.r, 0, Math.PI * 2);
-      ctx.fill();
-    }
-    circle(ctx, b.p, b.r);
-    circle(ctx, b.p, b.r * 0.55);
-  }
-
-  for (const r of g.rollovers) {
-    ctx.strokeStyle = r.lit ? BRIGHT : DIM;
-    if (r.lit) {
-      ctx.fillStyle = "rgba(150,255,150,0.3)";
-      ctx.beginPath();
-      ctx.arc(r.p.x, r.p.y, 8, 0, Math.PI * 2);
-      ctx.fill();
-    }
-    circle(ctx, r.p, 8);
-  }
-
-  for (const f of g.flippers) {
-    ctx.strokeStyle = f.angle !== f.rest ? BRIGHT : LINE;
-    capsule(ctx, f.pivot, flipperTip(f), f.r);
-    circle(ctx, f.pivot, 3);
-  }
+  for (const f of g.features) f.draw(ctx, g, time);
 
   if (g.phase === "playing") {
-    const b = g.ball;
     ctx.strokeStyle = "#fff";
-    circle(ctx, b, BALL_R);
-    // Spoke so you can see it roll
-    const a = (b.x + b.y) / BALL_R;
-    line(ctx, b, { x: b.x + Math.cos(a) * BALL_R, y: b.y + Math.sin(a) * BALL_R });
+    for (const b of g.balls) {
+      ctx.fillStyle = "rgba(255,255,255,0.15)";
+      ctx.beginPath();
+      ctx.arc(b.x, b.y, BALL_R, 0, Math.PI * 2);
+      ctx.fill();
+      circle(ctx, b, BALL_R);
+      // Spoke so you can see it roll
+      const a = (b.x + b.y) / BALL_R;
+      line(ctx, b, { x: b.x + Math.cos(a) * BALL_R, y: b.y + Math.sin(a) * BALL_R });
+    }
+
+    for (const p of g.popups) label(ctx, p.text, p, 13, alpha(p.color, Math.min(1, p.time * 2)));
+
+    const msg = g.messages[0];
+    if (msg && Math.floor(time * 8) % 4 !== 0) label(ctx, msg.text, { x: 230, y: 610 }, 20, msg.color ?? BRIGHT);
+
+    // Launch help while a ball is waiting on the plunger
+    if (g.balls.some((b) => inShooterLane(b) && b.vy >= 0)) {
+      if (g.plunger > 0) {
+        label(ctx, `POWER ${Math.round(g.plunger * 100)}%  -  LET GO TO LAUNCH`, { x: 230, y: 650 }, 13);
+      } else if (Math.floor(time * 2) % 2 === 0) {
+        label(ctx, "HOLD BOTH TRIGGERS (Z + M) TO PULL", { x: 230, y: 650 }, 13);
+        label(ctx, "the plunger, then let go  ▶", { x: 230, y: 668 }, 11, alpha(BRIGHT, 0.7));
+      }
+    }
   }
 
-  if (g.bonusFlash > 0 && Math.floor(time * 8) % 2 === 0) centerText(ctx, "LANES BONUS +5000", 420, 20);
   if (g.phase === "ready") {
-    centerText(ctx, "PULL A TRIGGER", 440, 28);
-    centerText(ctx, "hold both triggers to launch", 470, 14);
+    panel(ctx, 545, [
+      ["HOW TO PLAY", 22, COLOR.lanes],
+      ["Keep the ball from falling", 13],
+      ["between the flippers.", 13],
+      ["Flippers: LT / RT  (keys Z / M)", 13, COLOR.flipper],
+      ["Launch: hold both, then let go", 13, COLOR.flipper],
+      ["Hit the coloured things to score.", 13],
+      ["The list on the right shows what to aim for.", 11, alpha(BRIGHT, 0.7)],
+      ["PULL A TRIGGER TO START", 16, Math.floor(time * 2) % 2 ? COLOR.save : alpha(COLOR.save, 0.4)],
+    ]);
   }
   if (g.phase === "gameover") {
-    centerText(ctx, "GAME OVER", 420, 32);
-    centerText(ctx, `SCORE ${g.score}`, 455, 18);
-    centerText(ctx, "PULL A TRIGGER", 490, 14);
+    panel(ctx, 570, [
+      ["GAME OVER", 30, "#f66"],
+      [`SCORE ${g.score.toLocaleString()}`, 18],
+      ["PULL A TRIGGER TO PLAY AGAIN", 14, Math.floor(time * 2) % 2 ? COLOR.save : alpha(COLOR.save, 0.4)],
+    ]);
   }
 }

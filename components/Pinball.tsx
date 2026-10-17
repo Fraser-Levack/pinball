@@ -4,14 +4,38 @@ import { useEffect, useRef, useState } from "react";
 import { H, W, createGame, startGame, stepGame } from "@/lib/game";
 import { Input } from "@/lib/input";
 import { render } from "@/lib/render";
+import { Sound } from "@/lib/sound";
+import { type Goal, buildTable } from "@/lib/table";
 
 const STEP = 1 / 120;
+
+// Controller rumble per game event: [strong motor, weak motor, milliseconds].
+const RUMBLE: Record<string, [number, number, number]> = {
+  bumper: [0.2, 0.6, 50],
+  sling: [0.1, 0.5, 40],
+  flipper: [0, 0.3, 25],
+  launch: [0.5, 0.2, 80],
+  drain: [0.8, 0.8, 300],
+  bonus: [0.4, 1, 250],
+  goal: [0.4, 1, 250],
+  target: [0.1, 0.4, 30],
+  drop: [0.2, 0.4, 40],
+  spinner: [0, 0.15, 15],
+  saucer: [0.3, 0.3, 60],
+  kick: [0.4, 0.2, 60],
+  kickback: [0.6, 0.4, 120],
+  multiball: [0.6, 1, 400],
+  save: [0.3, 0.6, 150],
+};
 
 interface Hud {
   score: number;
   balls: number;
+  multiplier: number;
   high: number;
   gamepad: string | null;
+  goals: Goal[];
+  soundReady: boolean;
 }
 
 function loadHigh(): number {
@@ -28,17 +52,51 @@ function saveHigh(n: number) {
   } catch {}
 }
 
+function loadMuted(): boolean {
+  try {
+    return localStorage.getItem("pinball-muted") === "1";
+  } catch {
+    return false;
+  }
+}
+
+function saveMuted(muted: boolean) {
+  try {
+    localStorage.setItem("pinball-muted", muted ? "1" : "0");
+  } catch {}
+}
+
 export default function Pinball() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [hud, setHud] = useState<Hud>({ score: 0, balls: 3, high: 0, gamepad: null });
+  const soundRef = useRef<Sound | null>(null);
+  const [muted, setMuted] = useState(false);
+  const [hud, setHud] = useState<Hud>({
+    score: 0,
+    balls: 3,
+    multiplier: 1,
+    high: 0,
+    gamepad: null,
+    goals: [],
+    soundReady: false,
+  });
 
   useEffect(() => {
     const canvas = canvasRef.current!;
     const ctx = canvas.getContext("2d")!;
-    const game = createGame();
+    const table = buildTable();
+    const game = createGame(table.features);
     const input = new Input();
     input.attach();
     let high = loadHigh();
+
+    const sound = new Sound();
+    sound.muted = loadMuted();
+    setMuted(sound.muted);
+    soundRef.current = sound;
+    // Browsers only start audio after the player interacts with the page.
+    const unlock = () => sound.unlock();
+    window.addEventListener("keydown", unlock);
+    window.addEventListener("pointerdown", unlock);
 
     const resize = () => {
       const scale = Math.min((window.innerHeight - 32) / H, (window.innerWidth - 32) / W);
@@ -64,6 +122,7 @@ export default function Pinball() {
       last = now;
 
       const snap = input.poll();
+      if (snap.start) sound.unlock();
       // Brief lockout after game over so a last-second flip doesn't instantly restart.
       const canStart = game.phase === "ready" || now - gameOverAt > 1500;
       if (snap.start && game.phase !== "playing" && canStart) startGame(game);
@@ -74,12 +133,9 @@ export default function Pinball() {
       }
 
       for (const e of game.events) {
-        if (e === "bumper") input.rumble(0.2, 0.6, 50);
-        else if (e === "sling") input.rumble(0.1, 0.5, 40);
-        else if (e === "flipper") input.rumble(0, 0.3, 25);
-        else if (e === "launch") input.rumble(0.5, 0.2, 80);
-        else if (e === "drain") input.rumble(0.8, 0.8, 300);
-        else if (e === "bonus") input.rumble(0.4, 1, 250);
+        sound.play(e);
+        const r = RUMBLE[e];
+        if (r) input.rumble(...r);
       }
       game.events.length = 0;
 
@@ -92,7 +148,15 @@ export default function Pinball() {
 
       render(ctx, game, now / 1000);
 
-      const next: Hud = { score: game.score, balls: game.balls, high, gamepad: snap.gamepad };
+      const next: Hud = {
+        score: game.score,
+        balls: game.ballsLeft,
+        multiplier: game.multiplier,
+        high,
+        gamepad: snap.gamepad,
+        goals: table.goals(game),
+        soundReady: sound.ready,
+      };
       const key = JSON.stringify(next);
       if (key !== prevHud) {
         prevHud = key;
@@ -106,9 +170,20 @@ export default function Pinball() {
     return () => {
       cancelAnimationFrame(raf);
       window.removeEventListener("resize", resize);
+      window.removeEventListener("keydown", unlock);
+      window.removeEventListener("pointerdown", unlock);
       input.detach();
     };
   }, []);
+
+  const toggleSound = () => {
+    const sound = soundRef.current;
+    if (!sound) return;
+    sound.muted = !sound.muted;
+    sound.unlock();
+    saveMuted(sound.muted);
+    setMuted(sound.muted);
+  };
 
   return (
     <div className="wrap">
@@ -117,22 +192,54 @@ export default function Pinball() {
         <h1>WIREFRAME PINBALL</h1>
         <div className="dim">SCORE</div>
         <div className="big">{hud.score.toLocaleString()}</div>
-        <div className="dim">BALLS</div>
-        <div>{"● ".repeat(Math.max(0, hud.balls)) || "-"}</div>
-        <div className="dim">HIGH</div>
-        <div>{hud.high.toLocaleString()}</div>
-        <div className="dim" style={{ marginTop: 12 }}>
-          CONTROLLER
+        <div className="row">
+          <div>
+            <div className="dim">BALLS LEFT</div>
+            <div>{"● ".repeat(Math.max(0, hud.balls)) || "-"}</div>
+          </div>
+          <div>
+            <div className="dim">BONUS</div>
+            <div>{hud.multiplier}X</div>
+          </div>
+          <div>
+            <div className="dim">HIGH</div>
+            <div>{hud.high.toLocaleString()}</div>
+          </div>
         </div>
-        <div style={{ fontSize: 12 }}>{hud.gamepad ?? "none (press a button to connect)"}</div>
+
+        <div className="dim section">WHAT TO AIM FOR</div>
+        <ul className="goals">
+          {hud.goals.map((goal) => (
+            <li key={goal.text} className={goal.ready ? "ready" : undefined} style={{ color: goal.color }}>
+              <span className="dot" style={{ background: goal.color }} />
+              <div>
+                <div>{goal.text}</div>
+                <div className="status">{goal.status}</div>
+              </div>
+            </li>
+          ))}
+        </ul>
+
+        <div className="dim section">CONTROLS</div>
         <table className="dim">
           <tbody>
             <tr><td>Left flipper</td><td>LT (Z)</td></tr>
             <tr><td>Right flipper</td><td>RT (M)</td></tr>
-            <tr><td>Plunger</td><td>hold both, release</td></tr>
+            <tr><td>Launch ball</td><td>hold both, let go</td></tr>
             <tr><td>Start</td><td>either trigger</td></tr>
           </tbody>
         </table>
+        <div className="tip">
+          Tip: tapping a flipper also moves which yellow lanes are lit, so you can line up the unlit one.
+        </div>
+
+        <div className="dim section">CONTROLLER</div>
+        <div style={{ fontSize: 12 }}>{hud.gamepad ?? "none (press a button to connect)"}</div>
+
+        <button className="sound" onClick={toggleSound}>
+          SOUND: {muted ? "OFF" : "ON"}
+        </button>
+        {!muted && !hud.soundReady && <div className="tip">Click or press any key to turn the sound on.</div>}
       </div>
     </div>
   );
