@@ -4,6 +4,7 @@
 import { COLOR } from "./draw";
 import type { Feature } from "./features/feature";
 import { BALL_R, type Ball, collideCapsule, collideCircle, v } from "./physics";
+import { type PromptRun, beginRun, createRun, endRun, revealToken } from "./prompt/run";
 
 export const W = 500;
 export const H = 1000;
@@ -14,8 +15,7 @@ export const PLUNGER_TRAVEL = 30;
 const GRAVITY = 1000;
 const MAX_SPEED = 2400;
 const SUBSTEPS = 4;
-const BALLS_PER_GAME = 3;
-const BALL_SAVE_SECONDS = 10;
+const BALLS_PER_GAME = 1;
 const AUTO_LAUNCH_SPEED = 1500;
 
 export type Phase = "ready" | "playing" | "gameover";
@@ -31,12 +31,11 @@ export interface Game {
   balls: Ball[]; // every ball on the table (more than one during multiball)
   phase: Phase;
   score: number;
+  prompt: PromptRun; // the AI prompt being built: each score reveals letters of the current goal
   ballsLeft: number; // including the one in play
   plunger: number; // 0..1 pull amount
   bonus: number; // paid out × multiplier when the ball drains
   multiplier: number;
-  ballSave: number; // seconds left in which a drain gives the ball back
-  ballSaveArmed: boolean; // ball save starts when the ball leaves the shooter lane
   flags: Record<string, boolean>; // rule state for table.ts, e.g. "lock" or "kickback" being lit
   counters: Record<string, number>; // rule counters for table.ts
   messages: Message[]; // queue shown in the middle of the table
@@ -70,12 +69,11 @@ export function createGame(features: Feature[]): Game {
     balls: [],
     phase: "ready",
     score: 0,
+    prompt: createRun(),
     ballsLeft: BALLS_PER_GAME,
     plunger: 0,
     bonus: 0,
     multiplier: 1,
-    ballSave: 0,
-    ballSaveArmed: false,
     flags: {},
     counters: {},
     messages: [],
@@ -89,6 +87,18 @@ export function createGame(features: Feature[]): Game {
 }
 
 // ---- Rule helpers: call these from hit handlers in table.ts ----
+
+/** Add points. Every score also reveals a couple of letters of the current prompt goal. */
+export function award(g: Game, points: number) {
+  if (points <= 0) return;
+  g.score += points;
+  if (g.phase !== "playing") return;
+  const completed = revealToken(g.prompt);
+  if (completed) {
+    showMessage(g, `${completed.toUpperCase()} COMPLETE`, { seconds: 2, color: COLOR.save });
+    g.events.push("goal");
+  }
+}
 
 export function showMessage(g: Game, text: string, opts: { seconds?: number; color?: string } = {}) {
   if (g.messages.length < 4) g.messages.push({ text, time: opts.seconds ?? 1.6, color: opts.color });
@@ -123,11 +133,11 @@ export function addExtraBall(g: Game) {
 export function startGame(g: Game) {
   g.phase = "playing";
   g.score = 0;
+  g.prompt = createRun();
   g.ballsLeft = BALLS_PER_GAME;
   g.balls = [];
   g.bonus = 0;
   g.multiplier = 1;
-  g.ballSave = 0;
   g.flags = {};
   g.counters = {};
   g.messages = [];
@@ -140,7 +150,6 @@ export function startGame(g: Game) {
 
 function newBall(g: Game) {
   serveBall(g);
-  g.ballSaveArmed = true;
 }
 
 function endOfBall(g: Game) {
@@ -148,17 +157,17 @@ function endOfBall(g: Game) {
   showMessage(g, "BALL LOST", { color: "#f66" });
   const bonus = g.bonus * g.multiplier;
   if (bonus > 0) {
-    g.score += bonus;
+    award(g, bonus);
     showMessage(g, `BONUS ${g.bonus} x${g.multiplier}`, { seconds: 2.5 });
   }
   g.bonus = 0;
   g.multiplier = 1;
-  g.ballSave = 0;
   g.ballsLeft -= 1;
   if (g.ballsLeft > 0) {
     newBall(g);
   } else {
     g.phase = "gameover";
+    endRun(g.prompt);
     g.events.push("gameover");
   }
 }
@@ -213,7 +222,10 @@ export function stepGame(g: Game, c: Controls, dt: number) {
       b.y = Math.min(b.y, PLUNGER_Y - BALL_R - 2.5);
       b.vy = -(500 + 1100 * g.plunger);
     }
-    if (waiting.length > 0) g.events.push("launch");
+    if (waiting.length > 0) {
+      g.events.push("launch");
+      beginRun(g.prompt);
+    }
     g.plunger = 0;
   }
   const py = PLUNGER_Y + g.plunger * PLUNGER_TRAVEL;
@@ -263,20 +275,6 @@ export function stepGame(g: Game, c: Controls, dt: number) {
 
   if (!playing) return;
 
-  if (g.ballSaveArmed && g.balls.some((b) => b.y < 200)) {
-    g.ballSaveArmed = false;
-    g.ballSave = BALL_SAVE_SECONDS;
-  }
-  g.ballSave = Math.max(0, g.ballSave - dt);
-
-  for (const ball of [...g.balls]) {
-    if (ball.y <= H + BALL_R * 3) continue;
-    g.balls.splice(g.balls.indexOf(ball), 1);
-    if (g.ballSave > 0) {
-      serveBall(g, true);
-      showMessage(g, "BALL SAVED", { color: COLOR.save });
-      g.events.push("save");
-    }
-  }
+  g.balls = g.balls.filter((b) => b.y <= H + BALL_R * 3);
   if (g.balls.length === 0) endOfBall(g);
 }

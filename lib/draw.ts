@@ -17,7 +17,7 @@ export const COLOR = {
   spinner: "#b48cff", // purple: spinner / orbit
   bumper: "#ff4f5e", // red: bumpers and slingshots
   flipper: "#f2f2f2",
-  save: "#6f6", // green: ball save
+  save: "#6f6", // green: prompt progress and start prompts
 };
 
 /** `#rrggbb` → `rgba(...)` with the given opacity. */

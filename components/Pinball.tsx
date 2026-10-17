@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { H, W, createGame, startGame, stepGame } from "@/lib/game";
 import { Input } from "@/lib/input";
+import { maskedGoal, promptText } from "@/lib/prompt/run";
 import { render } from "@/lib/render";
 import { Sound } from "@/lib/sound";
 import { type Goal, buildTable } from "@/lib/table";
@@ -25,10 +26,17 @@ const RUMBLE: Record<string, [number, number, number]> = {
   kick: [0.4, 0.2, 60],
   kickback: [0.6, 0.4, 120],
   multiball: [0.6, 1, 400],
-  save: [0.3, 0.6, 150],
 };
 
+interface PromptHud {
+  text: string; // completed sections only
+  started: boolean;
+  done: boolean;
+  goal: { section: string; masked: string; revealed: number; letters: number } | null;
+}
+
 interface Hud {
+  prompt: PromptHud;
   score: number;
   balls: number;
   multiplier: number;
@@ -69,8 +77,11 @@ function saveMuted(muted: boolean) {
 export default function Pinball() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const soundRef = useRef<Sound | null>(null);
+  const promptRef = useRef<HTMLDivElement>(null);
   const [muted, setMuted] = useState(false);
+  const [copied, setCopied] = useState(false);
   const [hud, setHud] = useState<Hud>({
+    prompt: { text: "", started: false, done: false, goal: null },
     score: 0,
     balls: 3,
     multiplier: 1,
@@ -148,7 +159,14 @@ export default function Pinball() {
 
       render(ctx, game, now / 1000);
 
+      const goal = game.prompt.goal;
       const next: Hud = {
+        prompt: {
+          text: promptText(game.prompt),
+          started: game.prompt.started,
+          done: game.prompt.state.done,
+          goal: goal && { section: goal.section, masked: maskedGoal(goal), revealed: goal.revealed, letters: goal.letters },
+        },
         score: game.score,
         balls: game.ballsLeft,
         multiplier: game.multiplier,
@@ -176,6 +194,12 @@ export default function Pinball() {
     };
   }, []);
 
+  // Keep the newest part of the prompt in view as it grows.
+  useEffect(() => {
+    const el = promptRef.current;
+    if (el) el.scrollTop = el.scrollHeight;
+  }, [hud.prompt.text]);
+
   const toggleSound = () => {
     const sound = soundRef.current;
     if (!sound) return;
@@ -184,6 +208,16 @@ export default function Pinball() {
     saveMuted(sound.muted);
     setMuted(sound.muted);
   };
+
+  const copyPrompt = async () => {
+    try {
+      await navigator.clipboard.writeText(hud.prompt.text);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1200);
+    } catch {}
+  };
+
+  const { prompt } = hud;
 
   return (
     <div className="wrap">
@@ -206,6 +240,35 @@ export default function Pinball() {
             <div>{hud.high.toLocaleString()}</div>
           </div>
         </div>
+
+        <div className="dim section">YOUR PROMPT</div>
+        <div ref={promptRef} className={`prompt${prompt.done ? " done" : ""}`}>
+          {prompt.text || <span className="dim">Launch the ball to start your prompt.</span>}
+        </div>
+        {prompt.goal && (
+          <div className="prompt-goal">
+            <div className="dim">
+              NEXT SECTION: {prompt.goal.section.toUpperCase()} · {prompt.goal.revealed}/{prompt.goal.letters}
+            </div>
+            <div>
+              {prompt.goal.masked.split(/(▒+)/).map((part, i) =>
+                part.startsWith("▒") ? (
+                  <span key={i} className="hidden">
+                    {part}
+                  </span>
+                ) : (
+                  part
+                ),
+              )}
+            </div>
+            <div className="tip">Every score reveals a couple of letters. Finish the section to add it to your prompt.</div>
+          </div>
+        )}
+        {prompt.done && (
+          <button className="sound" onClick={copyPrompt} disabled={!prompt.text}>
+            {copied ? "COPIED" : "COPY PROMPT"}
+          </button>
+        )}
 
         <div className="dim section">WHAT TO AIM FOR</div>
         <ul className="goals">

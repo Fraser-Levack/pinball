@@ -4,7 +4,7 @@
 //   1. Create a feature from lib/features (or write a new class extending Feature).
 //      Give it a colour from COLOR (lib/draw.ts) and a sound (lib/sound.ts) if you like.
 //   2. Attach behaviour with `.onHit((g, feature, ball) => { ... })`. Handy things to do in there:
-//        g.score += n, showMessage(g, "TEXT"), g.flags.something = true, startMultiball(g),
+//        award(g, n), showMessage(g, "TEXT"), g.flags.something = true, startMultiball(g),
 //        addExtraBall(g), after(g, seconds, fn), g.events.push("goal") for a sound,
 //        or push the ball (ball.vx / ball.vy).
 //   3. Add it to the list returned at the bottom of buildTable(), and a line to `goals`
@@ -22,7 +22,7 @@ import { Saucer } from "./features/saucer";
 import { Spinner } from "./features/spinner";
 import { DropTarget, StandupTarget } from "./features/target";
 import { OneWayGate, Slingshot, Walls } from "./features/walls";
-import { type Game, H, LANE_X, PLUNGER_Y, addExtraBall, showMessage, startMultiball } from "./game";
+import { type Game, H, LANE_X, PLUNGER_Y, addExtraBall, award, showMessage, startMultiball } from "./game";
 import { type Vec, v } from "./physics";
 
 /** One line of the "what to aim for" list next to the table. */
@@ -89,7 +89,7 @@ export function buildTable(): Table {
     (x, i) => new Rollover(v(x, 90), { label: "PIN"[i], bonus: 100, color: COLOR.lanes }),
   );
   onAllLit(topLanes, (g) => {
-    g.score += 5000;
+    award(g, 5000);
     g.multiplier = Math.min(5, g.multiplier + 1);
     showMessage(g, `BONUS NOW ${g.multiplier}X`, { color: COLOR.lanes });
     g.events.push("goal");
@@ -101,7 +101,7 @@ export function buildTable(): Table {
   onAllLit(
     dropTargets,
     (g) => {
-      g.score += 5000;
+      award(g, 5000);
       g.flags.lock = true;
       showMessage(g, "LOCK LIT: SHOOT THE SAUCER", { color: COLOR.drops, seconds: 2.2 });
       g.counters.dropBanks = (g.counters.dropBanks ?? 0) + 1;
@@ -117,7 +117,7 @@ export function buildTable(): Table {
   // Blue standup targets: light all three to arm the left outlane kickback.
   const standups = [340, 385, 430].map((y) => new StandupTarget(v(72, y), v(72, y + 28), { bonus: 100 }));
   onAllLit(standups, (g) => {
-    g.score += 2500;
+    award(g, 2500);
     g.flags.kickback = true;
     showMessage(g, "KICKBACK READY", { color: COLOR.standups });
     g.events.push("goal");
@@ -161,11 +161,6 @@ export function buildTable(): Table {
     new Light(v(195, 515), "LOCK", { color: COLOR.drops, lit: (g) => !!g.flags.lock }),
     new Light(v(265, 515), "EXTRA BALL", { color: COLOR.drops, lit: (g) => !!g.flags.extraBall }),
     new Light(v(36, 905), "KICK", { color: COLOR.standups, lit: (g) => !!g.flags.kickback }),
-    new Light(v(230, 960), "SHOOT AGAIN", {
-      color: COLOR.save,
-      lit: (g) => g.ballSave > 0,
-      blink: (g) => g.ballSave < 3,
-    }),
   ];
 
   // Words on the playfield telling new players what each thing is for.

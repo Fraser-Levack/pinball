@@ -43,7 +43,6 @@ const SOUNDS: Record<string, Synth> = {
     s.arpeggio(t, [523, 659, 784, 1047, 784, 1047, 1319], 0.08, "square", 0.13);
   },
   bonus: (s, t) => s.arpeggio(t, [784, 988, 1175, 1568], 0.08, "triangle", 0.2),
-  save: (s, t) => s.arpeggio(t, [440, 660, 880], 0.08, "sine", 0.2),
   drain: (s, t) => {
     s.tone(t, 0.7, 420, 60, "sawtooth", 0.14);
     s.noise(t, 0.4, 0.08, 400);

@@ -3,7 +3,7 @@
 // does whatever counts as a "hit" for it.
 
 import { LINE } from "../draw";
-import type { Game } from "../game";
+import { type Game, award } from "../game";
 import type { Ball } from "../physics";
 
 export type HitHandler<F extends Feature = Feature> = (g: Game, feature: F, ball: Ball) => void;
@@ -40,7 +40,7 @@ export abstract class Feature {
 
   /** Subclasses call this when the ball hits them: scores, plays its sound, then runs the handlers. */
   protected hit(g: Game, ball: Ball) {
-    g.score += this.points;
+    award(g, this.points);
     g.bonus += this.bonus;
     if (this.sound) g.events.push(this.sound);
     if (this.popup && this.points >= 50) {

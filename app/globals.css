@@ -31,3 +31,7 @@ canvas { display: block; border: 1px solid #262; }
 .hud .sound { margin-top: 16px; font: inherit; font-size: 13px; color: #cfc; background: #031; border: 1px solid #3c3; border-radius: 4px; padding: 4px 12px; cursor: pointer; }
 .hud .sound:hover { background: #052; }
 @keyframes pulse { from { background: rgba(255,255,255,0.03); } to { background: rgba(255,255,255,0.14); } }
+.hud .prompt { max-height: 30vh; overflow-y: auto; margin-top: 4px; padding: 8px; border: 1px solid #262; color: #cfc; font-size: 13px; line-height: 1.45; white-space: pre-wrap; }
+.hud .prompt.done { border-color: #3c3; }
+.hud .prompt-goal { margin-top: 8px; font-size: 13px; line-height: 1.45; }
+.hud .prompt-goal .hidden { color: #252; }
