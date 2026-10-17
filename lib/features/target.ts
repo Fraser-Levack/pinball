@@ -1,4 +1,4 @@
-import { COLOR, alpha, capsule, line } from "../draw";
+import { COLOR, alpha, bar, line } from "../draw";
 import type { Game } from "../game";
 import { type Ball, type Vec, collideCapsule } from "../physics";
 import { Feature, type FeatureOptions } from "./feature";
@@ -32,14 +32,7 @@ export class StandupTarget extends Feature {
   }
 
   draw(ctx: CanvasRenderingContext2D) {
-    if (this.lit || this.flash > 0) {
-      ctx.strokeStyle = alpha(this.color, this.lit ? 0.6 : this.flash * 0.6);
-      ctx.lineWidth = 7;
-      line(ctx, this.a, this.b);
-      ctx.lineWidth = 1.5;
-    }
-    ctx.strokeStyle = this.lit || this.flash > 0 ? this.color : alpha(this.color, 0.55);
-    capsule(ctx, this.a, this.b, 4);
+    bar(ctx, this.a, this.b, 9, this.lit || this.flash > 0 ? this.color : alpha(this.color, 0.35));
   }
 }
 
@@ -66,17 +59,15 @@ export class DropTarget extends Feature {
 
   draw(ctx: CanvasRenderingContext2D) {
     if (this.lit) {
-      ctx.strokeStyle = alpha(this.color, 0.35);
+      // Knocked down: just a faint dashed outline of where it stood.
+      ctx.save();
+      ctx.strokeStyle = alpha(this.color, 0.4);
+      ctx.lineWidth = 2;
       ctx.setLineDash([3, 4]);
       line(ctx, this.a, this.b);
-      ctx.setLineDash([]);
+      ctx.restore();
     } else {
-      ctx.strokeStyle = alpha(this.color, 0.5);
-      ctx.lineWidth = 7;
-      line(ctx, this.a, this.b);
-      ctx.lineWidth = 1.5;
-      ctx.strokeStyle = this.color;
-      capsule(ctx, this.a, this.b, 4);
+      bar(ctx, this.a, this.b, 9, this.color);
     }
   }
 }

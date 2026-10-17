@@ -1,7 +1,7 @@
 // Game state, rule helpers and the physics loop. The playfield itself (features and the
 // rules wired to them) lives in table.ts. Units are table pixels; time is seconds.
 
-import { COLOR } from "./draw";
+import { COLOR, PALETTE } from "./draw";
 import type { Feature } from "./features/feature";
 import { BALL_R, type Ball, collideCapsule, collideCircle, v } from "./physics";
 import { type PromptRun, beginRun, createRun, endRun, revealToken } from "./prompt/run";
@@ -36,7 +36,7 @@ export interface Game {
   plunger: number; // 0..1 pull amount
   bonus: number; // paid out × multiplier when the ball drains
   multiplier: number;
-  flags: Record<string, boolean>; // rule state for table.ts, e.g. "lock" or "kickback" being lit
+  flags: Record<string, boolean>; // rule state for table.ts, e.g. "lock" being lit
   counters: Record<string, number>; // rule counters for table.ts
   messages: Message[]; // queue shown in the middle of the table
   popups: Popup[]; // points floating up from where they were scored
@@ -88,16 +88,21 @@ export function createGame(features: Feature[]): Game {
 
 // ---- Rule helpers: call these from hit handlers in table.ts ----
 
-/** Add points. Every score also reveals a couple of letters of the current prompt goal. */
-export function award(g: Game, points: number) {
-  if (points <= 0) return;
+/**
+ * Add points. Every score also reveals a couple of letters of the current prompt goal;
+ * returns those letters (empty when nothing was revealed).
+ */
+export function award(g: Game, points: number): string {
+  if (points <= 0) return "";
   g.score += points;
-  if (g.phase !== "playing") return;
-  const completed = revealToken(g.prompt);
-  if (completed) {
-    showMessage(g, `${completed.toUpperCase()} COMPLETE`, { seconds: 2, color: COLOR.save });
+  if (g.phase !== "playing") return "";
+  const reveal = revealToken(g.prompt);
+  if (!reveal) return "";
+  if (reveal.completed) {
+    showMessage(g, `${reveal.completed.toUpperCase()} COMPLETE`, { seconds: 2, color: COLOR.save });
     g.events.push("goal");
   }
+  return reveal.letters;
 }
 
 export function showMessage(g: Game, text: string, opts: { seconds?: number; color?: string } = {}) {
@@ -154,7 +159,7 @@ function newBall(g: Game) {
 
 function endOfBall(g: Game) {
   g.events.push("drain");
-  showMessage(g, "BALL LOST", { color: "#f66" });
+  showMessage(g, "BALL LOST", { color: PALETTE.pink });
   const bonus = g.bonus * g.multiplier;
   if (bonus > 0) {
     award(g, bonus);

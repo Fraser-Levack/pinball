@@ -40,10 +40,13 @@ export abstract class Feature {
 
   /** Subclasses call this when the ball hits them: scores, plays its sound, then runs the handlers. */
   protected hit(g: Game, ball: Ball) {
-    award(g, this.points);
+    const letters = award(g, this.points);
     g.bonus += this.bonus;
     if (this.sound) g.events.push(this.sound);
-    if (this.popup && this.points >= 50) {
+    // The letters this hit revealed float up from the ball, so you can see the prompt being built.
+    if (this.popup && letters) {
+      g.popups.push({ x: ball.x, y: ball.y - 18, text: letters, color: this.color, time: 0.9 });
+    } else if (this.popup && this.points >= 50) {
       g.popups.push({ x: ball.x, y: ball.y - 16, text: `+${this.points}`, color: this.color, time: 0.9 });
     }
     for (const h of this.handlers) h(g, this, ball);

@@ -1,4 +1,4 @@
-import { COLOR, alpha, circle, disc, label } from "../draw";
+import { COLOR, alpha, disc, label, shade } from "../draw";
 import type { Game } from "../game";
 import type { Ball, Vec } from "../physics";
 import { Feature, type FeatureOptions } from "./feature";
@@ -45,9 +45,7 @@ export class Rollover extends Feature {
 
   draw(ctx: CanvasRenderingContext2D) {
     const on = this.lit || this.flash > 0;
-    disc(ctx, this.p, 8, alpha(this.color, this.lit ? 0.6 : 0.1 + this.flash * 0.5));
-    ctx.strokeStyle = on ? this.color : alpha(this.color, 0.45);
-    circle(ctx, this.p, 8);
-    if (this.text) label(ctx, this.text, { x: this.p.x, y: this.p.y + 19 }, 12, on ? this.color : alpha(this.color, 0.45));
+    disc(ctx, this.p, 8, this.lit ? this.color : alpha(this.color, 0.25 + this.flash * 0.6));
+    if (this.text) label(ctx, this.text, { x: this.p.x, y: this.p.y + 19 }, 12, on ? shade(this.color) : alpha(shade(this.color), 0.4), 700);
   }
 }

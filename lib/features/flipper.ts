@@ -1,4 +1,4 @@
-import { COLOR, alpha, capsule, circle } from "../draw";
+import { BG, COLOR, PALETTE, capsule, disc } from "../draw";
 import type { Game } from "../game";
 import { type Ball, type Vec, collideCapsule, v } from "../physics";
 import { Feature, type FeatureOptions } from "./feature";
@@ -46,10 +46,9 @@ export class Flipper extends Feature {
   }
 
   draw(ctx: CanvasRenderingContext2D) {
-    ctx.fillStyle = alpha(this.color, this.angle !== this.rest ? 0.35 : 0.12);
-    ctx.strokeStyle = this.angle !== this.rest ? "#fff" : alpha(this.color, 0.8);
+    ctx.fillStyle = this.angle !== this.rest ? PALETTE.teal : this.color;
     capsule(ctx, this.pivot, this.tip(), 8);
     ctx.fill();
-    circle(ctx, this.pivot, 3);
+    disc(ctx, this.pivot, 3, BG);
   }
 }

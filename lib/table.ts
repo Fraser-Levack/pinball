@@ -21,7 +21,7 @@ import { Saucer } from "./features/saucer";
 import { Spinner } from "./features/spinner";
 import { DropTarget, StandupTarget } from "./features/target";
 import { OneWayGate, Slingshot, Walls } from "./features/walls";
-import { H, LANE_X, PLUNGER_Y, addExtraBall, award, showMessage, startMultiball } from "./game";
+import { LANE_X, PLUNGER_Y, addExtraBall, award, showMessage, startMultiball } from "./game";
 import { type Vec, v } from "./physics";
 
 export interface Table {
@@ -32,6 +32,8 @@ export interface Table {
 const mirror = (p: Vec): Vec => v(20 + LANE_X - p.x, p.y);
 const mirrorAll = (ps: Vec[]): Vec[] => ps.map(mirror);
 const countLit = (fs: Lightable[]) => fs.filter((f) => f.lit).length;
+
+const TOP_LANE_WORD = "PROMPT";
 
 function topArch(): Vec[] {
   const arc: Vec[] = [];
@@ -46,18 +48,22 @@ function topArch(): Vec[] {
 export function buildTable(): Table {
   // ---------------- Structure ----------------
 
-  const outlaneGuide = [v(52, 740), v(52, 820), v(136, 876)]; // splits the left outlane from the inlane
+  // No outlanes: the sides slope straight down into the flippers, so only the centre drains.
+  const leftFunnel = [v(20, 250), v(20, 799), v(136, 876)];
   const walls = new Walls([
     topArch(),
-    [v(20, 250), v(20, H)], // left side, open at the bottom so the outlane drains
+    leftFunnel, // left side
     [v(480, 250), v(480, PLUNGER_Y)], // right side
-    [v(LANE_X, 260), v(LANE_X, PLUNGER_Y)], // shooter lane divider
+    [v(LANE_X, 260), v(LANE_X, PLUNGER_Y)], // shooter lane divider, also the playfield's right side
+    [mirror(leftFunnel[1]), mirror(leftFunnel[2])], // right funnel
     [v(62, 300), v(62, 520)], // inner wall of the left orbit
-    outlaneGuide,
-    mirrorAll(outlaneGuide),
   ]);
+  // P-R-O-M-P-T lanes across the top. The divider tops sit on a curve inside the arch so the
+  // lanes fan round with it, and so a launched ball crossing the top right passes over them.
+  const laneDividerX = Array.from({ length: TOP_LANE_WORD.length + 1 }, (_, i) => 130 + i * 40);
+  const laneTop = (x: number) => 250 - Math.sqrt(170 * 170 - (x - 250) ** 2);
   const topLaneDividers = new Walls(
-    [170, 220, 270, 320].map((x) => [v(x, 70), v(x, 110)]),
+    laneDividerX.map((x) => [v(x, laneTop(x)), v(x, laneTop(x) + 40)]),
     { r: 3, color: COLOR.lanes },
   );
 
@@ -73,10 +79,15 @@ export function buildTable(): Table {
 
   // ---------------- Scoring features and rules ----------------
 
-  // Yellow top lanes: light all three to raise the end-of-ball bonus multiplier.
+  // Yellow top lanes: light all six to raise the end-of-ball bonus multiplier.
   // The flipper buttons rotate which lanes are lit.
-  const topLanes = [195, 245, 295].map(
-    (x, i) => new Rollover(v(x, 90), { label: "PIN"[i], bonus: 100, color: COLOR.lanes }),
+  const topLanes = [...TOP_LANE_WORD].map(
+    (letter, i) =>
+      new Rollover(v(laneDividerX[i] + 20, (laneTop(laneDividerX[i]) + laneTop(laneDividerX[i + 1])) / 2 + 16), {
+        label: letter,
+        bonus: 100,
+        color: COLOR.lanes,
+      }),
   );
   onAllLit(topLanes, (g) => {
     award(g, 5000);
@@ -104,12 +115,11 @@ export function buildTable(): Table {
     0.6,
   );
 
-  // Blue standup targets: light all three to arm the left outlane kickback.
+  // Blue standup targets: light all three for a points award.
   const standups = [340, 385, 430].map((y) => new StandupTarget(v(72, y), v(72, y + 28), { bonus: 100 }));
   onAllLit(standups, (g) => {
     award(g, 2500);
-    g.flags.kickback = true;
-    showMessage(g, "KICKBACK READY", { color: COLOR.standups });
+    showMessage(g, "TARGETS COMPLETE", { color: COLOR.standups });
     g.events.push("goal");
   });
 
@@ -130,38 +140,27 @@ export function buildTable(): Table {
 
   const inlanes = [v(68, 760), mirror(v(68, 760))].map((p) => new Rollover(p, { latch: false, bonus: 50 }));
 
-  // Left outlane: a lit kickback fires the ball back up into play.
-  const leftOutlane = new Rollover(v(36, 860), { latch: false, points: 2000 }).onHit((g, _f, ball) => {
-    if (!g.flags.kickback) return;
-    g.flags.kickback = false;
-    ball.vx = 0;
-    ball.vy = -1300;
-    showMessage(g, "KICKBACK SAVED IT", { color: COLOR.standups });
-    g.events.push("kickback");
-  });
-  const rightOutlane = new Rollover(mirror(v(36, 860)), { latch: false, points: 2000 });
-
   // ---------------- Lights and hints ----------------
 
   // Insert lights, coloured to match whatever lights them.
   const lights = [
     ...[2, 3, 4, 5].map(
-      (n, i) => new Light(v(185 + i * 40, 145), `${n}X`, { color: COLOR.lanes, lit: (g) => g.multiplier >= n }),
+      (n, i) => new Light(v(190 + i * 40, 164), `${n}X`, { color: COLOR.lanes, lit: (g) => g.multiplier >= n }),
     ),
     new Light(v(195, 515), "LOCK", { color: COLOR.drops, lit: (g) => !!g.flags.lock }),
     new Light(v(265, 515), "EXTRA BALL", { color: COLOR.drops, lit: (g) => !!g.flags.extraBall }),
-    new Light(v(36, 905), "KICK", { color: COLOR.standups, lit: (g) => !!g.flags.kickback }),
   ];
 
   // Words on the playfield telling new players what each thing is for.
   const hints = [
-    new Hint(v(245, 182), () => `ROLL OVER P-I-N  ${countLit(topLanes)}/3`, { color: COLOR.lanes, size: 9 }),
+    new Hint(v(250, 200), () => `ROLL OVER ${[...TOP_LANE_WORD].join("-")}  ${countLit(topLanes)}/${topLanes.length}`, {
+      color: COLOR.lanes,
+      size: 9,
+    }),
     new Hint(v(400, 360), (g) => (g.flags.lock ? "LOCK\nLIT" : `HIT ALL\n${countLit(dropTargets)}/4`), {
       color: COLOR.drops,
     }),
-    new Hint(v(95, 312), (g) => (g.flags.kickback ? "KICKBACK\nREADY" : `HIT ALL\n${countLit(standups)}/3`), {
-      color: COLOR.standups,
-    }),
+    new Hint(v(95, 312), () => `HIT ALL\n${countLit(standups)}/3`, { color: COLOR.standups }),
     new Hint(
       v(230, 446),
       (g) => (g.flags.lock ? "▼ MULTIBALL ▼" : g.flags.extraBall ? "▼ EXTRA BALL ▼" : null),
@@ -188,8 +187,6 @@ export function buildTable(): Table {
     spinner,
     saucer,
     ...inlanes,
-    leftOutlane,
-    rightOutlane,
     ...flippers,
   ];
   return { features };

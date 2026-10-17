@@ -1,4 +1,4 @@
-import { COLOR, alpha, capsule, line } from "../draw";
+import { COLOR, INK, bar } from "../draw";
 import type { Game } from "../game";
 import { type Ball, type Vec, collideCapsule, side } from "../physics";
 import { Feature, type FeatureOptions } from "./feature";
@@ -21,11 +21,7 @@ export class Walls extends Feature {
   }
 
   draw(ctx: CanvasRenderingContext2D) {
-    ctx.strokeStyle = this.color;
-    for (const [a, b] of this.segs) {
-      if (this.r > 2) capsule(ctx, a, b, this.r);
-      else line(ctx, a, b);
-    }
+    for (const [a, b] of this.segs) bar(ctx, a, b, this.r * 2, this.color);
   }
 }
 
@@ -58,17 +54,19 @@ export class Slingshot extends Feature {
 
   draw(ctx: CanvasRenderingContext2D) {
     const [a, b, c] = this.pts;
-    ctx.fillStyle = alpha(this.color, 0.08 + this.flash * 0.4);
+    const color = this.flash > 0.5 ? INK : this.color;
+    ctx.save();
+    ctx.fillStyle = ctx.strokeStyle = color;
+    ctx.lineWidth = 6;
+    ctx.lineJoin = "round";
     ctx.beginPath();
     ctx.moveTo(a.x, a.y);
     ctx.lineTo(b.x, b.y);
     ctx.lineTo(c.x, c.y);
+    ctx.closePath();
     ctx.fill();
-    ctx.strokeStyle = alpha(this.color, 0.6);
-    capsule(ctx, a, b, 3);
-    capsule(ctx, b, c, 3);
-    ctx.strokeStyle = this.flash > 0 ? "#fff" : this.color;
-    capsule(ctx, c, a, 3);
+    ctx.stroke();
+    ctx.restore();
   }
 }
 
@@ -87,7 +85,6 @@ export class OneWayGate extends Feature {
   }
 
   draw(ctx: CanvasRenderingContext2D) {
-    ctx.strokeStyle = this.color;
-    line(ctx, this.a, this.b);
+    bar(ctx, this.a, this.b, 4, this.color);
   }
 }

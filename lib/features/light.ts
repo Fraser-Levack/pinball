@@ -1,4 +1,4 @@
-import { COLOR, alpha, circle, disc, label } from "../draw";
+import { COLOR, alpha, disc, label, shade } from "../draw";
 import type { Game } from "../game";
 import type { Vec } from "../physics";
 import { Feature } from "./feature";
@@ -23,11 +23,9 @@ export class Light extends Feature {
   draw(ctx: CanvasRenderingContext2D, g: Game, time: number) {
     const lit = this.isLit(g);
     const on = lit && !(this.isBlinking(g) && Math.floor(time * 6) % 2 === 0);
-    if (on) disc(ctx, this.p, 9, alpha(this.color, 0.25));
-    disc(ctx, this.p, 5, on ? this.color : alpha(this.color, 0.12));
-    ctx.strokeStyle = alpha(this.color, on ? 1 : 0.4);
-    circle(ctx, this.p, 5);
-    label(ctx, this.text, { x: this.p.x, y: this.p.y + 15 }, 10, alpha(this.color, lit ? 1 : 0.4));
+    if (on) disc(ctx, this.p, 10, alpha(this.color, 0.3));
+    disc(ctx, this.p, 6, on ? this.color : alpha(this.color, 0.25));
+    label(ctx, this.text, { x: this.p.x, y: this.p.y + 16 }, 9, lit ? shade(this.color) : alpha(shade(this.color), 0.45));
   }
 }
 
@@ -52,6 +50,6 @@ export class Hint extends Feature {
     if (g.phase !== "playing") return;
     const text = this.text(g);
     if (!text || (this.blink && Math.floor(time * 4) % 2 === 0)) return;
-    label(ctx, text, this.p, this.size, this.color);
+    label(ctx, text, this.p, this.size, this.color.startsWith("#") ? shade(this.color) : this.color);
   }
 }

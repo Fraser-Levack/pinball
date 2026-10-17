@@ -42,15 +42,22 @@ export function beginRun(run: PromptRun) {
   run.goal = drawGoal(run.state);
 }
 
-/** One score's worth of progress. Returns the section name when that score completed a goal. */
-export function revealToken(run: PromptRun): string | null {
+export interface Reveal {
+  letters: string; // the letters this score uncovered
+  completed: string | null; // section name when this score finished the goal
+}
+
+/** One score's worth of progress. */
+export function revealToken(run: PromptRun): Reveal | null {
   const goal = run.goal;
   if (!goal || run.state.done) return null;
+  const from = goal.revealed;
   goal.revealed = Math.min(goal.letters, goal.revealed + LETTERS_PER_SCORE);
-  if (goal.revealed < goal.letters) return null;
+  const letters = goal.text.replace(/\s/g, "").slice(from, goal.revealed);
+  if (goal.revealed < goal.letters) return { letters, completed: null };
   run.state = goal.next;
   run.goal = drawGoal(run.state);
-  return goal.section;
+  return { letters, completed: goal.section };
 }
 
 /** Game over: drop the unfinished goal and sign off with the finish section. */

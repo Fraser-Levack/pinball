@@ -24,12 +24,12 @@ const RUMBLE: Record<string, [number, number, number]> = {
   spinner: [0, 0.15, 15],
   saucer: [0.3, 0.3, 60],
   kick: [0.4, 0.2, 60],
-  kickback: [0.6, 0.4, 120],
   multiball: [0.6, 1, 400],
 };
 
 interface PromptHud {
   text: string; // completed sections only
+  sections: number;
   started: boolean;
   done: boolean;
   goal: { section: string; masked: string; revealed: number; letters: number } | null;
@@ -80,7 +80,7 @@ export default function Pinball() {
   const [muted, setMuted] = useState(false);
   const [copied, setCopied] = useState(false);
   const [hud, setHud] = useState<Hud>({
-    prompt: { text: "", started: false, done: false, goal: null },
+    prompt: { text: "", sections: 0, started: false, done: false, goal: null },
     score: 0,
     balls: 3,
     multiplier: 1,
@@ -161,6 +161,7 @@ export default function Pinball() {
       const next: Hud = {
         prompt: {
           text: promptText(game.prompt),
+          sections: game.prompt.state.segments.length,
           started: game.prompt.started,
           done: game.prompt.state.done,
           goal: goal && { section: goal.section, masked: maskedGoal(goal), revealed: goal.revealed, letters: goal.letters },
@@ -215,79 +216,89 @@ export default function Pinball() {
   };
 
   const { prompt } = hud;
+  const goal = prompt.goal;
 
   return (
     <div className="wrap">
       <canvas ref={canvasRef} />
-      <div className="hud">
-        <h1>WIREFRAME PINBALL</h1>
-        <div className="dim">SCORE</div>
-        <div className="big">{hud.score.toLocaleString()}</div>
-        <div className="row">
-          <div>
-            <div className="dim">BALLS LEFT</div>
-            <div>{"● ".repeat(Math.max(0, hud.balls)) || "-"}</div>
-          </div>
-          <div>
-            <div className="dim">BONUS</div>
-            <div>{hud.multiplier}X</div>
-          </div>
-          <div>
-            <div className="dim">HIGH</div>
-            <div>{hud.high.toLocaleString()}</div>
-          </div>
-        </div>
+      <aside className="hud">
+        <h1>PROMPT PINBALL</h1>
 
-        <div className="dim section">YOUR PROMPT</div>
-        <div ref={promptRef} className={`prompt${prompt.done ? " done" : ""}`}>
-          {prompt.text || <span className="dim">Launch the ball to start your prompt.</span>}
-        </div>
-        {prompt.goal && (
-          <div className="prompt-goal">
-            <div className="dim">
-              NEXT SECTION: {prompt.goal.section.toUpperCase()} · {prompt.goal.revealed}/{prompt.goal.letters}
-            </div>
-            <div>
-              {prompt.goal.masked.split(/(▒+)/).map((part, i) =>
-                part.startsWith("▒") ? (
-                  <span key={i} className="hidden">
-                    {part}
-                  </span>
-                ) : (
-                  part
-                ),
-              )}
-            </div>
-            <div className="tip">Every score reveals a couple of letters. Finish the section to add it to your prompt.</div>
+        <section className={`card prompt-card${prompt.done ? " done" : ""}`}>
+          <div className="card-head">
+            <span>YOUR PROMPT</span>
+            <span className="chip">
+              {prompt.sections} {prompt.sections === 1 ? "section" : "sections"}
+            </span>
           </div>
-        )}
-        {prompt.done && (
-          <button className="sound" onClick={copyPrompt} disabled={!prompt.text}>
-            {copied ? "COPIED" : "COPY PROMPT"}
+          <div ref={promptRef} className="prompt-text">
+            {prompt.text || <span className="muted">Launch the ball to start your prompt.</span>}
+          </div>
+
+          {goal && (
+            <div className="goal">
+              <div className="goal-head">
+                <span className="chip mint">BUILDING · {goal.section.toUpperCase()}</span>
+                <span className="muted">
+                  {goal.revealed}/{goal.letters} letters
+                </span>
+              </div>
+              <div className="goal-text">
+                {[...goal.masked].map((ch, i) =>
+                  ch === "▒" ? <span key={i} className="blank" /> : <span key={i}>{ch}</span>,
+                )}
+              </div>
+              <div className="progress">
+                <div style={{ width: `${(100 * goal.revealed) / goal.letters}%` }} />
+              </div>
+              <div className="muted small">Every score reveals letters. Finish the section to add it.</div>
+            </div>
+          )}
+
+          {prompt.done && (
+            <button className="copy" onClick={copyPrompt} disabled={!prompt.text}>
+              {copied ? "COPIED!" : "COPY PROMPT"}
+            </button>
+          )}
+        </section>
+
+        <section className="tiles">
+          <div className="tile yellow">
+            <div className="tile-label">SCORE</div>
+            <div className="tile-value">{hud.score.toLocaleString()}</div>
+          </div>
+          <div className="tile teal">
+            <div className="tile-label">BONUS</div>
+            <div className="tile-value">{hud.multiplier}X</div>
+          </div>
+          <div className="tile">
+            <div className="tile-label">HIGH</div>
+            <div className="tile-value">{hud.high.toLocaleString()}</div>
+          </div>
+        </section>
+
+        <section className="card">
+          <div className="card-head">
+            <span>CONTROLS</span>
+          </div>
+          <table>
+            <tbody>
+              <tr><td>Left flipper</td><td>LT (Z)</td></tr>
+              <tr><td>Right flipper</td><td>RT (M)</td></tr>
+              <tr><td>Launch ball</td><td>hold both, let go</td></tr>
+              <tr><td>Start</td><td>either trigger</td></tr>
+            </tbody>
+          </table>
+          <div className="muted small">
+            Tapping a flipper moves which yellow lanes are lit, so you can line up the unlit one.
+          </div>
+          <div className="muted small">Controller: {hud.gamepad ?? "none (press a button to connect)"}</div>
+          <button className="sound" onClick={toggleSound}>
+            SOUND {muted ? "OFF" : "ON"}
           </button>
-        )}
-
-        <div className="dim section">CONTROLS</div>
-        <table className="dim">
-          <tbody>
-            <tr><td>Left flipper</td><td>LT (Z)</td></tr>
-            <tr><td>Right flipper</td><td>RT (M)</td></tr>
-            <tr><td>Launch ball</td><td>hold both, let go</td></tr>
-            <tr><td>Start</td><td>either trigger</td></tr>
-          </tbody>
-        </table>
-        <div className="tip">
-          Tip: tapping a flipper also moves which yellow lanes are lit, so you can line up the unlit one.
-        </div>
-
-        <div className="dim section">CONTROLLER</div>
-        <div style={{ fontSize: 12 }}>{hud.gamepad ?? "none (press a button to connect)"}</div>
-
-        <button className="sound" onClick={toggleSound}>
-          SOUND: {muted ? "OFF" : "ON"}
-        </button>
-        {!muted && !hud.soundReady && <div className="tip">Click or press any key to turn the sound on.</div>}
-      </div>
+          {!muted && !hud.soundReady && <div className="muted small">Click or press any key to turn the sound on.</div>}
+        </section>
+      </aside>
     </div>
   );
 }

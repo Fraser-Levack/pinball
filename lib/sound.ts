@@ -34,10 +34,6 @@ const SOUNDS: Record<string, Synth> = {
     s.noise(t, 0.25, 0.15, 1200);
     s.tone(t, 0.25, 120, 520, "sawtooth", 0.1);
   },
-  kickback: (s, t) => {
-    s.noise(t, 0.15, 0.25, 900);
-    s.tone(t, 0.3, 150, 900, "sawtooth", 0.12);
-  },
   goal: (s, t) => s.arpeggio(t, [523, 659, 784, 1047], 0.07, "square", 0.12),
   multiball: (s, t) => {
     s.arpeggio(t, [523, 659, 784, 1047, 784, 1047, 1319], 0.08, "square", 0.13);

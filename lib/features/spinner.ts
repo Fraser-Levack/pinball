@@ -1,4 +1,4 @@
-import { COLOR, alpha, circle } from "../draw";
+import { COLOR, INK, disc, shade } from "../draw";
 import type { Game } from "../game";
 import { type Ball, type Vec, side } from "../physics";
 import { Feature, type FeatureOptions } from "./feature";
@@ -52,8 +52,7 @@ export class Spinner extends Feature {
     const nx = -(this.b.y - this.a.y) / len;
     const ny = (this.b.x - this.a.x) / len;
     const w = Math.abs(Math.sin(this.angle)) * 6 + 0.5;
-    ctx.fillStyle = alpha(this.color, 0.25 + Math.min(0.5, this.speed / 60));
-    ctx.strokeStyle = this.speed > 0 ? "#fff" : this.color;
+    ctx.fillStyle = this.speed > 0 ? shade(this.color, 0.2) : this.color;
     ctx.beginPath();
     ctx.moveTo(this.a.x + nx * w, this.a.y + ny * w);
     ctx.lineTo(this.b.x + nx * w, this.b.y + ny * w);
@@ -61,8 +60,7 @@ export class Spinner extends Feature {
     ctx.lineTo(this.a.x - nx * w, this.a.y - ny * w);
     ctx.closePath();
     ctx.fill();
-    ctx.stroke();
-    circle(ctx, this.a, 2);
-    circle(ctx, this.b, 2);
+    disc(ctx, this.a, 3, INK);
+    disc(ctx, this.b, 3, INK);
   }
 }

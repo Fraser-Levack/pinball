@@ -1,4 +1,4 @@
-import { COLOR, alpha, circle, disc } from "../draw";
+import { BG, COLOR, alpha, disc } from "../draw";
 import type { Game } from "../game";
 import type { Ball, Vec } from "../physics";
 import { Feature, type FeatureOptions } from "./feature";
@@ -48,10 +48,7 @@ export class Saucer extends Feature {
   }
 
   draw(ctx: CanvasRenderingContext2D, _g: Game, time: number) {
-    disc(ctx, this.p, 14, alpha(this.color, this.held ? 0.35 + 0.2 * Math.sin(time * 20) : 0.15));
-    ctx.strokeStyle = this.held ? "#fff" : this.color;
-    circle(ctx, this.p, 14);
-    ctx.strokeStyle = alpha(this.color, 0.5);
-    circle(ctx, this.p, 9);
+    disc(ctx, this.p, 15, this.held ? alpha(this.color, 0.7 + 0.3 * Math.sin(time * 20)) : this.color);
+    disc(ctx, this.p, 9, BG);
   }
 }

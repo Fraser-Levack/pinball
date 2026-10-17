@@ -1,4 +1,4 @@
-import { COLOR, alpha, circle, disc } from "../draw";
+import { BG, COLOR, INK, disc } from "../draw";
 import type { Game } from "../game";
 import { type Ball, type Vec, collideCircle } from "../physics";
 import { Feature, type FeatureOptions } from "./feature";
@@ -25,9 +25,8 @@ export class PopBumper extends Feature {
   }
 
   draw(ctx: CanvasRenderingContext2D) {
-    disc(ctx, this.p, this.r, alpha(this.color, 0.12 + this.flash * 0.5));
-    ctx.strokeStyle = this.flash > 0 ? "#fff" : this.color;
-    circle(ctx, this.p, this.r);
-    circle(ctx, this.p, this.r * 0.55);
+    // Grows a little and flashes ink when struck.
+    disc(ctx, this.p, this.r + this.flash * 4, this.flash > 0.5 ? INK : this.color);
+    disc(ctx, this.p, this.r * 0.45, BG);
   }
 }
