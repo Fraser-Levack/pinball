@@ -12,6 +12,7 @@ export interface Ball {
   vx: number;
   vy: number;
   held: boolean; // parked by a feature (e.g. a saucer); skips physics while true
+  rest?: { x: number; y: number; time: number }; // where it has been sitting still, for the stuck-ball nudge
 }
 
 export interface Contact {
