@@ -72,6 +72,12 @@ button { font: inherit; cursor: pointer; border: none; color: var(--ink); }
 .build-secondary { padding: 10px 16px; border-radius: 14px; background: rgba(18, 70, 79, 0.08); font-size: 13px; font-weight: 800; letter-spacing: 1px; }
 .build--running .build-secondary { margin-top: 12px; }
 .build-primary:hover, .build-secondary:hover { filter: brightness(1.05); }
+.build-primary:disabled { opacity: 0.4; cursor: default; filter: none; }
+.build-link { display: block; text-align: center; color: var(--ink); text-decoration: none; }
+.build-key { display: flex; flex-direction: column; gap: 6px; margin-top: 12px; }
+.build-key > label:first-child { font-size: 12px; font-weight: 800; letter-spacing: 1px; color: var(--teal); }
+.build-key input[type="password"] { font: inherit; font-size: 14px; padding: 8px 12px; border-radius: 12px; border: none; background: #fff; box-shadow: 0 0 0 1px var(--line); }
+.build-remember { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--ink-soft); }
 
 /* Score tiles */
 .tiles { display: grid; grid-template-columns: 1.4fr 1fr 1fr; gap: 10px; }

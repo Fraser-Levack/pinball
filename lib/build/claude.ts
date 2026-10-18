@@ -85,7 +85,8 @@ export type BuildEvent =
   | { type: "start"; id: string; dir: string }
   | { type: "status"; text: string }
   | { type: "file"; action: "created" | "edited"; path: string }
-  | { type: "done"; id: string; dir: string; summary: string; files: string[] }
+  // Cloud builds (lib/build/cloud.ts) have no folder: they hand back the page itself, signed.
+  | { type: "done"; id: string; dir: string; summary: string; files: string[]; html?: string; signature?: string }
   | { type: "error"; message: string };
 
 const ID_RE = /^[A-Za-z0-9_-]{1,120}$/;

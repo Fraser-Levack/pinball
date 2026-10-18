@@ -81,7 +81,8 @@ function saveMuted(muted: boolean) {
   } catch {}
 }
 
-export default function Pinball() {
+/** `cloudBuilds`: build with the player's own API key instead of Claude Code on this computer (see app/page.tsx). */
+export default function Pinball({ cloudBuilds }: { cloudBuilds: boolean }) {
   const { name, setName } = usePlayer();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const soundRef = useRef<Sound | null>(null);
@@ -340,6 +341,7 @@ export default function Pinball() {
             savedRun={save?.id ? { id: save.id, prompt: save.run.prompt } : null}
             addons={hud.addons}
             onStage={onStage}
+            cloud={cloudBuilds}
           />
           {prompt.done && !stage && (
             <button className="new-game" onClick={newGame}>
