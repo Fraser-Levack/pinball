@@ -28,6 +28,7 @@ export default function AddAppForm() {
   const [summary, setSummary] = useState("");
   const [name, setName] = useState("");
   const [score, setScore] = useState("");
+  const [key, setKey] = useState("");
   const [status, setStatus] = useState<Status>({ state: "idle" });
 
   const submit = async (e: FormEvent) => {
@@ -36,7 +37,7 @@ export default function AddAppForm() {
     try {
       const res = await fetch("/api/builds/manual", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...(key && { "x-add-app-key": key }) },
         body: JSON.stringify({ html, prompt, summary, name, score: score ? Number(score) : 0 }),
       });
       if (!res.ok) return setStatus({ state: "error", message: await errorFrom(res) });
@@ -106,6 +107,11 @@ export default function AddAppForm() {
           </label>
         </div>
       </fieldset>
+
+      <label>
+        <span>Key</span>
+        <input type="password" value={key} onChange={e => setKey(e.target.value)} placeholder="Not needed on localhost" autoComplete="off" />
+      </label>
 
       <div className="controls">
         <button type="submit" disabled={status.state === "saving" || !html.trim() || !prompt.trim() || !summary.trim()}>

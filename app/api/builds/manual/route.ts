@@ -15,7 +15,11 @@ const MAX_PROMPT = 20000;
 const str = (v: unknown) => (typeof v === "string" ? v.trim() : "");
 
 export async function POST(request: Request) {
-  if (!isLocalRequest(request)) return refuse(403, "Apps can only be added from this computer.");
+  // Local requests need no key; deployed ones must send ADD_APP_KEY.
+  const key = process.env.ADD_APP_KEY;
+  if (!isLocalRequest(request) && (!key || request.headers.get("x-add-app-key") !== key)) {
+    return refuse(403, "Wrong or missing key.");
+  }
   if (!isJson(request)) return refuse(415, "Send the request as JSON.");
 
   const body = await request.json().catch(() => null);
