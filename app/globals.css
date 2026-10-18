@@ -140,7 +140,17 @@ button { font: inherit; cursor: pointer; border: none; color: var(--ink); }
 .apps-section { margin-bottom: 24px; }
 .apps-section h2 { font-size: 12px; font-weight: 800; letter-spacing: 2px; margin: 0 0 10px; }
 .apps-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 10px; }
-.app-card { display: flex; flex-direction: column; gap: 4px; padding: 10px 12px; border-radius: 14px; background: var(--cream); box-shadow: 0 0 0 1px var(--line); color: inherit; text-decoration: none; }
+.app-card { position: relative; display: flex; flex-direction: column; gap: 4px; padding: 10px 12px; border-radius: 14px; background: var(--cream); box-shadow: 0 0 0 1px var(--line); color: inherit; text-decoration: none; }
+.app-card-link { display: block; color: inherit; text-decoration: none; }
+.app-card-link::after { content: ""; position: absolute; inset: 0; border-radius: inherit; }
+.app-card .like { position: relative; z-index: 1; }
+.apps-sort { display: flex; gap: 8px; margin: 0 0 16px; }
+.apps-sort a { padding: 6px 14px; border-radius: 999px; background: rgba(18, 70, 79, 0.08); color: var(--ink); font-size: 12px; font-weight: 800; letter-spacing: 1px; text-decoration: none; }
+.apps-sort a.active { background: var(--mint); }
+.like { flex-shrink: 0; padding: 2px 8px; border-radius: 999px; background: rgba(18, 70, 79, 0.08); font-size: 12px; font-weight: 800; white-space: nowrap; }
+.like.liked { background: var(--pink); color: #fff; }
+.like:hover { filter: brightness(1.05); }
+.app-view-tags { display: flex; align-items: center; gap: 8px; }
 .app-card.featured { border-top: 6px solid var(--mint); }
 .app-card:hover { filter: brightness(1.03); box-shadow: 0 0 0 2px var(--teal); }
 .app-title { font-size: 15px; font-weight: 800; line-height: 1.25; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

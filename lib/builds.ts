@@ -7,11 +7,17 @@ export interface SharedApp {
   title: string | null; // older shares have none: use appTitle()
   summary: string;
   featured: boolean;
+  like_count: number;
   created_at: string;
   scores: { player_name: string; score: number; prompt: string };
 }
 
-const FIELDS = "id,title,summary,featured,created_at,scores(player_name,score,prompt)";
+/** How the apps list is ordered: most liked first, or newest first. */
+export type AppSort = "popular" | "new";
+export const APP_SORTS: AppSort[] = ["popular", "new"];
+
+const FIELDS = "id,title,summary,featured,like_count,created_at,scores(player_name,score,prompt)";
+const ORDER: Record<AppSort, string> = { popular: "like_count.desc,created_at.desc", new: "created_at.desc" };
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 export const MAX_TITLE = 60;
 export const MAX_HTML_BYTES = 1_000_000;
@@ -40,11 +46,11 @@ export function appTitle(app: SharedApp): string {
   return t.charAt(0).toUpperCase() + t.slice(1);
 }
 
-/** Hand-picked apps first, then the newest. Throws if Supabase can't be reached. */
-export async function listApps(): Promise<{ featured: SharedApp[]; recent: SharedApp[] }> {
+/** Hand-picked apps first, then the rest in `sort` order. Throws if Supabase can't be reached. */
+export async function listApps(sort: AppSort = "popular"): Promise<{ featured: SharedApp[]; recent: SharedApp[] }> {
   const [featured, recent] = await Promise.all([
-    supabase(`builds?select=${FIELDS}&featured=is.true&order=created_at.desc&limit=12`),
-    supabase(`builds?select=${FIELDS}&featured=is.false&order=created_at.desc&limit=48`),
+    supabase(`builds?select=${FIELDS}&featured=is.true&order=${ORDER[sort]}&limit=12`),
+    supabase(`builds?select=${FIELDS}&featured=is.false&order=${ORDER[sort]}&limit=48`),
   ]);
   for (const res of [featured, recent]) {
     if (!res.ok) throw new Error(`Could not load apps: ${res.status} ${await res.text()}`);

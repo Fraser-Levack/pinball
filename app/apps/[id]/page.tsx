@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import AppFrame from "@/components/AppFrame";
+import LikeButton from "@/components/LikeButton";
 import { appTitle, getApp } from "@/lib/builds";
 
 export default async function AppPage(props: PageProps<"/apps/[id]">) {
@@ -12,7 +13,10 @@ export default async function AppPage(props: PageProps<"/apps/[id]">) {
     <div className="builder app-view">
       <div className="app-view-head">
         <Link href="/apps" className="dim small">← ALL APPS</Link>
-        {app.featured && <span className="chip mint">FEATURED</span>}
+        <div className="app-view-tags">
+          {app.featured && <span className="chip mint">FEATURED</span>}
+          <LikeButton id={app.id} likes={app.like_count} />
+        </div>
       </div>
       <h2 className="app-view-title">{appTitle(app)}</h2>
       <p className="app-summary">{app.summary}</p>
